@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { SubscriptionModule } from './subscription/subscription.module';
 import { WatchlistModule } from './watchlist/watchlist.module';
 import { SettingsModule } from './settings/settings.module';
+import { CoinsModule } from './coins/coins.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { SettingsModule } from './settings/settings.module';
     SubscriptionModule,
     WatchlistModule,
     SettingsModule,
+    CoinsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
