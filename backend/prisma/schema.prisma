@@ -69,6 +69,7 @@ model User {
   watchlist UserWatchlist[]
   settings  UserSettings?
   adminLogs AdminLog[]
+  alerts    Alert[]
 
   @@map("users")
 }
@@ -107,6 +108,7 @@ model Coin {
   accumulationSignals AccumulationSignal[]
   tokenSettings      TokenSettings?
   watchlist          UserWatchlist[]
+  alerts             Alert[]
 
   @@unique([contractAddress, chain])
   @@index([contractAddress, chain])
@@ -309,4 +311,38 @@ model NormalizedEvent {
   @@index([txHash])
   @@index([provider, chain])
   @@map("normalized_events")
+}
+
+model Alert {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Signal reference (can be either MarketSignal or AccumulationSignal)
+  signalType String  // 'market' or 'accumulation'
+  signalId   String  // ID of the signal
+
+  // Alert metadata
+  title     String
+  message   String
+  coinId    String?
+  coin      Coin?   @relation(fields: [coinId], references: [id], onDelete: SetNull)
+
+  score     Int
+  read      Boolean @default(false)
+
+  // Notification delivery status
+  emailSent    Boolean @default(false)
+  telegramSent Boolean @default(false)
+  emailSentAt  DateTime?
+  telegramSentAt DateTime?
+
+  createdAt DateTime @default(now())
+  readAt    DateTime?
+
+  @@index([userId])
+  @@index([userId, read])
+  @@index([createdAt])
+  @@index([coinId])
+  @@map("alerts")
 }

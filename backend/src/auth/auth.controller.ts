@@ -6,13 +6,13 @@ import { AuthDto } from './dto/auth.dto';
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @Post('signup')
+  @Post('register')
   signup(@Body() dto: AuthDto) {
     return this.authService.signup(dto);
   }
 
   @HttpCode(HttpStatus.OK)
-  @Post('signin')
+  @Post('login')
   signin(@Body() dto: AuthDto) {
     return this.authService.signin(dto);
   }

@@ -25,7 +25,9 @@ export class AuthService {
         },
       });
 
-      return this.signToken(user.id, user.email);
+      // Return user data (without password) for registration
+      const { password, ...userWithoutPassword } = user;
+      return userWithoutPassword;
     } catch (error) {
       if (
         error instanceof PrismaClientKnownRequestError &&
@@ -50,13 +52,19 @@ export class AuthService {
 
     if (!pwMatches) throw new ForbiddenException('Credentials incorrect');
 
-    return this.signToken(user.id, user.email);
+    const tokens = await this.signToken(user.id, user.email);
+    const { password, ...userWithoutPassword } = user;
+
+    return {
+      ...tokens,
+      user: userWithoutPassword,
+    };
   }
 
   async signToken(
     userId: string,
     email: string,
-  ): Promise<{ access_token: string }> {
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     const payload = {
       sub: userId,
       email,
@@ -64,13 +72,20 @@ export class AuthService {
 
     const secret = this.config.get('JWT_SECRET');
 
-    const token = await this.jwtService.signAsync(payload, {
+    const accessToken = await this.jwtService.signAsync(payload, {
       expiresIn: '15m',
       secret: secret,
     });
 
+    // For now, refresh token is same as access token (can be improved later)
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      expiresIn: '7d',
+      secret: secret,
+    });
+
     return {
-      access_token: token,
+      accessToken,
+      refreshToken,
     };
   }
 }

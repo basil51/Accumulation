@@ -1,5 +1,7 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { NormalizationService } from '../normalization/normalization.service';
 import { AlchemyMapper } from '../normalization/mappers/alchemy.mapper';
 import { CovalentMapper } from '../normalization/mappers/covalent.mapper';
@@ -10,6 +12,7 @@ export class EventsProcessor extends WorkerHost {
     private normalizationService: NormalizationService,
     private alchemyMapper: AlchemyMapper,
     private covalentMapper: CovalentMapper,
+    @InjectQueue('detection') private detectionQueue: Queue,
   ) {
     super();
   }
@@ -30,7 +33,16 @@ export class EventsProcessor extends WorkerHost {
   private async handleAlchemyWebhook(data: any) {
     try {
         const normalizedEvent = await this.alchemyMapper.normalize(data);
-        return await this.normalizationService.saveNormalizedEvent(normalizedEvent);
+        const savedEvent = await this.normalizationService.saveNormalizedEvent(normalizedEvent);
+        
+        // Enqueue for detection if event was saved
+        if (savedEvent) {
+          await this.detectionQueue.add('process-event', {
+            eventId: savedEvent.eventId,
+          });
+        }
+        
+        return savedEvent;
     } catch (error) {
         console.error('Error processing Alchemy webhook:', error);
         throw error;
@@ -40,7 +52,16 @@ export class EventsProcessor extends WorkerHost {
   private async handleCovalentWebhook(data: any) {
     try {
         const normalizedEvent = await this.covalentMapper.normalize(data);
-        return await this.normalizationService.saveNormalizedEvent(normalizedEvent);
+        const savedEvent = await this.normalizationService.saveNormalizedEvent(normalizedEvent);
+        
+        // Enqueue for detection if event was saved
+        if (savedEvent) {
+          await this.detectionQueue.add('process-event', {
+            eventId: savedEvent.eventId,
+          });
+        }
+        
+        return savedEvent;
     } catch (error) {
         console.error('Error processing Covalent webhook:', error);
         throw error;

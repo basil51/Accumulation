@@ -63,6 +63,14 @@ accumulation/
    ```bash
    pnpm install
    ```
+   
+   **Note:** This project uses `pnpm` as the package manager. Make sure you have pnpm installed:
+   ```bash
+   npm install -g pnpm
+   # or
+   corepack enable
+   corepack prepare pnpm@latest --activate
+   ```
 
 3. **Start Docker services (PostgreSQL & Redis)**
    ```bash
@@ -87,8 +95,8 @@ accumulation/
    pnpm dev
    ```
 
-   - Frontend: http://localhost:3001
-   - Backend API: http://localhost:3000
+   - Frontend: http://localhost:4000
+   - Backend API: http://localhost:3001/api
 
 ## 📚 Documentation
 

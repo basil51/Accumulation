@@ -12,6 +12,8 @@ import { CoinsModule } from './coins/coins.module';
 import { QueuesModule } from './queues/queues.module';
 import { NormalizationModule } from './normalization/normalization.module';
 import { EventsModule } from './events/events.module';
+import { SignalsModule } from './signals/signals.module';
+import { AlertsModule } from './alerts/alerts.module';
 
 @Module({
   imports: [
@@ -37,6 +39,8 @@ import { EventsModule } from './events/events.module';
     QueuesModule,
     NormalizationModule,
     EventsModule,
+    SignalsModule,
+    AlertsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
