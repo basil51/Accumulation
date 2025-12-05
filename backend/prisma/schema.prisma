@@ -287,17 +287,19 @@ model NormalizedEvent {
 
   txHash        String
   timestamp     DateTime
+  blockNumber   Int?
 
   tokenContract String
-  tokenSymbol    String
-  tokenDecimals Int
+  tokenSymbol   String?
+  tokenDecimals Int?
 
-  fromAddress   String?
-  toAddress     String?
+  fromAddress   String
+  toAddress     String
 
   amount        Float
-  amountUsd     Float
+  amountUsd     Float?
 
+  metadata      Json?
   rawData       Json
 
   createdAt     DateTime @default(now())
@@ -308,4 +310,3 @@ model NormalizedEvent {
   @@index([provider, chain])
   @@map("normalized_events")
 }
-
