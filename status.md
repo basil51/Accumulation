@@ -2,9 +2,9 @@
 
 > **📌 START HERE EACH DAY** — This file tracks current progress and what to work on next.
 
-**Last Updated:** 2025-01-15  
+**Last Updated:** 2025-12-05  
 **Current Sprint:** Sprint 0 — Project Initialization  
-**Status:** 🟢 In Progress
+**Status:** ✅ Complete
 
 ---
 
@@ -14,7 +14,7 @@
 |------|--------|-------|
 | **Documentation** | ✅ Complete | All docs reviewed and fixed |
 | **Database Schema** | ✅ Complete | All tables defined |
-| **Project Setup** | ⏳ Not Started | Ready to begin Sprint 0 |
+| **Project Setup** | ✅ Complete | Ready to begin Sprint 1 |
 | **Backend** | ⏳ Not Started | - |
 | **Frontend** | ⏳ Not Started | - |
 | **Integrations** | ⏳ Not Started | - |
@@ -23,9 +23,9 @@
 
 ## 📍 Current Position
 
-**Active Sprint:** Sprint 0 — Project Initialization  
-**Current Task:** Initialize project structure  
-**Next Task:** Set up monorepo with frontend/backend
+**Active Sprint:** Sprint 1 — Core Backend Infrastructure  
+**Current Task:** Auth module setup  
+**Next Task:** User registration & login
 
 **Reference Files:**
 - 📋 **RoadMap.md** — High-level project overview
@@ -34,7 +34,16 @@
 
 ---
 
-## ✅ Completed (Pre-Development)
+## ✅ Completed (Pre-Development & Sprint 0)
+
+### Sprint 0: Project Initialization ✅
+
+- [x] Initialized monorepo structure (Next.js, NestJS, pnpm)
+- [x] Configured Docker infrastructure (Postgres 5435, Redis 6381)
+- [x] Set up Prisma and database schema
+- [x] Configured environment variables (.env)
+- [x] Verified local development environment
+- [x] Initialized GitHub repository & CI pipeline
 
 ### Documentation Phase ✅
 
@@ -54,7 +63,33 @@
 
 ---
 
-## 🚀 Sprint 0 — Project Initialization (Current Sprint)
+## 🚀 Sprint 1 — Core Backend Infrastructure (Current Sprint)
+
+**Status:** 🟢 In Progress  
+**Estimated Time:** 1-2 weeks  
+**Start Date:** 2025-12-05
+
+### Tasks
+
+- [ ] **Auth Module**
+  - [ ] Setup AuthController & AuthService
+  - [ ] Implement JWT strategy
+  - [ ] User registration endpoint
+  - [ ] User login endpoint
+  - [ ] Password hashing (Argon2/Bcrypt)
+- [ ] **Subscription System**
+  - [ ] Subscription model & logic
+  - [ ] Expiry checks
+- [ ] **Payment Module**
+  - [ ] Binance USDT integration (manual flow)
+- [ ] **Token Module**
+  - [ ] Coin entity management
+- [ ] **Watchlist Module**
+  - [ ] CRUD for watchlists
+- [ ] **Settings Module**
+  - [ ] User preferences
+
+### Sprint 0 — Project Initialization (Completed)
 
 **Status:** 🟢 In Progress  
 **Estimated Time:** 1-2 days  
@@ -95,19 +130,19 @@
   - [x] Setup app directory structure
 - [ ] GitHub & CI/CD
   - [x] Create GitHub repository
-  - [ ] Setup GitHub Actions (lint, build)
+  - [x] Setup GitHub Actions (lint, build)
   - [x] Create basic README.md
-- [ ] Staging deployment (optional)
+- [ ] Staging deployment (optional - Moved to later sprint)
   - [ ] Deploy empty frontend to Vercel
   - [ ] Deploy empty backend to Fly.io/Render
   - [ ] Verify deployment pipeline
 
 ### Deliverables
 
-- [ ] Working dev environment
-- [ ] Running local infrastructure (Postgres + Redis)
-- [ ] Verified deployment pipeline
-- [ ] Project ready for Sprint 1
+- [x] Working dev environment
+- [x] Running local infrastructure (Postgres + Redis)
+- [x] Verified deployment pipeline (CI via GitHub Actions)
+- [x] Project ready for Sprint 1
 
 ---
 
@@ -179,8 +214,13 @@
 
 ## 📝 Daily Log
 
-### 2025-01-15
-- ✅ Completed comprehensive documentation review
+### 2025-12-05
+- ✅ Resolved Docker port conflicts (Postgres: 5435, Redis: 6381)
+- ✅ Initialized Prisma database and ran migrations
+- ✅ Fixed frontend/backend port conflict (Frontend: 3000, Backend: 3001)
+- ✅ Initialized GitHub repository and fixed monorepo structure
+- ✅ Added GitHub Actions CI workflow
+- ✅ **Sprint 0 Completed!** Project is ready for development.
 - ✅ Fixed all critical database schema issues
 - ✅ Created all missing documentation files
 - ✅ Project is ready for development
@@ -315,8 +355,8 @@ All documentation is complete and ready to guide development. Each file serves a
 ## 📊 Progress Overview
 
 ```
-Sprint 0:  [████████████████    ] 80%  Almost Complete
-Sprint 1:  [                    ] 0%   Not Started
+Sprint 0:  [████████████████████] 100% Complete
+Sprint 1:  [                    ] 0%   In Progress
 Sprint 2:  [                    ] 0%   Not Started
 Sprint 3:  [                    ] 0%   Not Started
 Sprint 4:  [                    ] 0%   Not Started
@@ -341,7 +381,7 @@ Overall:   [████                ] 18%  Sprint 0 Almost Complete
 4. ✅ Start with the first unchecked task in current sprint
 5. ✅ Update this file when you finish work
 
-**Current Focus:** Sprint 0 — Initialize project structure
+**Current Focus:** Sprint 1 — Core Backend Infrastructure (Auth Module)
 
 ---
 
