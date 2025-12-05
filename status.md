@@ -3,8 +3,8 @@
 > **📌 START HERE EACH DAY** — This file tracks current progress and what to work on next.
 
 **Last Updated:** 2025-12-05  
-**Current Sprint:** Sprint 0 — Project Initialization  
-**Status:** ✅ Complete
+**Current Sprint:** Sprint 2 — Event Normalization + Storage Pipeline  
+**Status:** 🟢 In Progress
 
 ---
 
@@ -15,7 +15,7 @@
 | **Documentation** | ✅ Complete | All docs reviewed and fixed |
 | **Database Schema** | ✅ Complete | All tables defined |
 | **Project Setup** | ✅ Complete | Ready to begin Sprint 1 |
-| **Backend** | ⏳ Not Started | - |
+| **Backend** | 🟡 In Progress | Sprint 1 Done, starting Sprint 2 |
 | **Frontend** | ⏳ Not Started | - |
 | **Integrations** | ⏳ Not Started | - |
 
@@ -23,9 +23,9 @@
 
 ## 📍 Current Position
 
-**Active Sprint:** Sprint 1 — Core Backend Infrastructure  
-**Current Task:** Auth module setup  
-**Next Task:** User registration & login
+**Active Sprint:** Sprint 2 — Event Normalization + Storage Pipeline  
+**Current Task:** Define NormalizedEvent schema  
+**Next Task:** Setup BullMQ & Job Queues
 
 **Reference Files:**
 - 📋 **RoadMap.md** — High-level project overview
@@ -63,7 +63,30 @@
 
 ---
 
-## 🚀 Sprint 1 — Core Backend Infrastructure (Current Sprint)
+## 🚀 Sprint 2 — Event Normalization + Storage Pipeline (Current Sprint)
+
+**Status:** 🟢 In Progress  
+**Estimated Time:** 1-2 weeks  
+**Start Date:** 2025-12-05
+
+### Tasks
+
+- [ ] **NormalizedEvent Schema**
+  - [ ] Refine Prisma schema for events
+- [ ] **Job Queues (BullMQ)**
+  - [ ] Setup BullMQ module
+  - [ ] Configure Redis connection
+  - [ ] Create event processing queue
+- [ ] **Normalization Layer**
+  - [ ] Create normalization service
+  - [ ] Define standard event interface
+- [ ] **Provider Mappers**
+  - [ ] Alchemy mapper
+  - [ ] Covalent mapper
+- [ ] **Deduplication**
+  - [ ] Implement event deduplication logic
+
+### Sprint 1 — Core Backend Infrastructure (Completed)
 
 **Status:** 🟢 In Progress  
 **Estimated Time:** 1-2 weeks  
@@ -72,22 +95,23 @@
 ### Tasks
 
 - [ ] **Auth Module**
-  - [ ] Setup AuthController & AuthService
-  - [ ] Implement JWT strategy
-  - [ ] User registration endpoint
-  - [ ] User login endpoint
-  - [ ] Password hashing (Argon2/Bcrypt)
-- [ ] **Subscription System**
-  - [ ] Subscription model & logic
-  - [ ] Expiry checks
-- [ ] **Payment Module**
+  - [x] Setup AuthController & AuthService
+  - [x] Implement JWT strategy
+  - [x] User registration endpoint
+  - [x] User login endpoint
+  - [x] Password hashing (Argon2)
+- [x] **Subscription System**
+  - [x] Subscription model & logic
+  - [x] Expiry checks
+  - [x] Subscription Guards & Decorators
+- [ ] **Payment Module** (Moved to Sprint 9)
   - [ ] Binance USDT integration (manual flow)
-- [ ] **Token Module**
-  - [ ] Coin entity management
-- [ ] **Watchlist Module**
-  - [ ] CRUD for watchlists
-- [ ] **Settings Module**
-  - [ ] User preferences
+- [x] **Token Module**
+  - [x] Coin entity management
+- [x] **Watchlist Module**
+  - [x] CRUD for watchlists
+- [x] **Settings Module**
+  - [x] User preferences
 
 ### Sprint 0 — Project Initialization (Completed)
 
@@ -209,12 +233,20 @@
 - Pricing page
 - Documentation
 - Onboarding
+- Payment Module (Binance USDT integration)
 
 ---
 
 ## 📝 Daily Log
 
 ### 2025-12-05
+- ✅ **Sprint 1 Completed!** Core backend infrastructure is ready.
+  - ✅ Auth Module (Signup, Login, JWT, Guards)
+  - ✅ Subscription Module (Upgrade, Status, Decorators)
+  - ✅ Watchlist Module (CRUD)
+  - ✅ Settings Module (User Preferences)
+  - ✅ Token Module (Coin Management)
+  - 🔄 **Decision:** Moved Payment Module to Sprint 9 to focus on core product first.
 - ✅ Resolved Docker port conflicts (Postgres: 5435, Redis: 6381)
 - ✅ Initialized Prisma database and ran migrations
 - ✅ Fixed frontend/backend port conflict (Frontend: 3000, Backend: 3001)
@@ -356,8 +388,8 @@ All documentation is complete and ready to guide development. Each file serves a
 
 ```
 Sprint 0:  [████████████████████] 100% Complete
-Sprint 1:  [                    ] 0%   In Progress
-Sprint 2:  [                    ] 0%   Not Started
+Sprint 1:  [████████████████████] 100% Complete
+Sprint 2:  [                    ] 0%   In Progress
 Sprint 3:  [                    ] 0%   Not Started
 Sprint 4:  [                    ] 0%   Not Started
 Sprint 5:  [                    ] 0%   Not Started
