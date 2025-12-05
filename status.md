@@ -3,7 +3,7 @@
 > **📌 START HERE EACH DAY** — This file tracks current progress and what to work on next.
 
 **Last Updated:** 2025-12-05  
-**Current Sprint:** Sprint 2 — Event Normalization + Storage Pipeline  
+**Current Sprint:** Sprint 3 — Detection Engine  
 **Status:** 🟢 In Progress
 
 ---
@@ -23,9 +23,9 @@
 
 ## 📍 Current Position
 
-**Active Sprint:** Sprint 2 — Event Normalization + Storage Pipeline  
-**Current Task:** Define NormalizedEvent schema  
-**Next Task:** Setup BullMQ & Job Queues
+**Active Sprint:** Sprint 3 — Detection Engine  
+**Current Task:** Rule engine setup  
+**Next Task:** Implement detection rules
 
 **Reference Files:**
 - 📋 **RoadMap.md** — High-level project overview
@@ -63,7 +63,7 @@
 
 ---
 
-## 🚀 Sprint 2 — Event Normalization + Storage Pipeline (Current Sprint)
+## 🚀 Sprint 3 — Detection Engine (Current Sprint)
 
 **Status:** 🟢 In Progress  
 **Estimated Time:** 1-2 weeks  
@@ -71,20 +71,42 @@
 
 ### Tasks
 
-- [ ] **NormalizedEvent Schema**
-  - [ ] Refine Prisma schema for events
-- [ ] **Job Queues (BullMQ)**
-  - [ ] Setup BullMQ module
-  - [ ] Configure Redis connection
-  - [ ] Create event processing queue
-- [ ] **Normalization Layer**
-  - [ ] Create normalization service
-  - [ ] Define standard event interface
-- [ ] **Provider Mappers**
-  - [ ] Alchemy mapper
-  - [ ] Covalent mapper
-- [ ] **Deduplication**
-  - [ ] Implement event deduplication logic
+- [ ] **Rule Engine**
+  - [ ] Create RuleEngine service
+  - [ ] Define Rule interface
+- [ ] **Detection Rules**
+  - [ ] Implement HighVolumeRule
+  - [ ] Implement PriceAnomalyRule
+  - [ ] Implement AccumulationPatternRule
+- [ ] **Scoring Model**
+  - [ ] Implement scoring logic
+  - [ ] Define signal confidence thresholds
+- [ ] **Signal Creation**
+  - [ ] Create MarketSignal entity logic
+  - [ ] Create AccumulationSignal entity logic
+
+### Sprint 2 — Event Normalization + Storage Pipeline (Completed)
+
+**Status:** 🟢 In Progress  
+**Estimated Time:** 1-2 weeks  
+**Start Date:** 2025-12-05
+
+### Tasks
+
+- [x] **NormalizedEvent Schema**
+  - [x] Refine Prisma schema for events
+- [x] **Job Queues (BullMQ)**
+  - [x] Setup BullMQ module
+  - [x] Configure Redis connection
+  - [x] Create event processing queue
+- [x] **Normalization Layer**
+  - [x] Create normalization service
+  - [x] Define standard event interface
+- [x] **Provider Mappers**
+  - [x] Alchemy mapper
+  - [x] Covalent mapper
+- [x] **Deduplication**
+  - [x] Implement event deduplication logic
 
 ### Sprint 1 — Core Backend Infrastructure (Completed)
 
@@ -240,6 +262,12 @@
 ## 📝 Daily Log
 
 ### 2025-12-05
+- ✅ **Sprint 2 Completed!** Event Normalization Pipeline is ready.
+  - ✅ BullMQ & Job Queues (Redis-backed processing)
+  - ✅ Event Normalization Layer (Standardized interface)
+  - ✅ Provider Mappers (Alchemy & Covalent support)
+  - ✅ Deduplication Service (Prevents duplicate event storage)
+  - ✅ NormalizedEvent Schema (Optimized for diverse event types)
 - ✅ **Sprint 1 Completed!** Core backend infrastructure is ready.
   - ✅ Auth Module (Signup, Login, JWT, Guards)
   - ✅ Subscription Module (Upgrade, Status, Decorators)
@@ -389,7 +417,8 @@ All documentation is complete and ready to guide development. Each file serves a
 ```
 Sprint 0:  [████████████████████] 100% Complete
 Sprint 1:  [████████████████████] 100% Complete
-Sprint 2:  [                    ] 0%   In Progress
+Sprint 2:  [████████████████████] 100% Complete
+Sprint 3:  [                    ] 0%   In Progress
 Sprint 3:  [                    ] 0%   Not Started
 Sprint 4:  [                    ] 0%   Not Started
 Sprint 5:  [                    ] 0%   Not Started
