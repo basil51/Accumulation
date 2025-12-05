@@ -1,0 +1,311 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// Enums
+// ============================================
+
+enum SubscriptionLevel {
+  FREE
+  BASIC
+  PRO
+  PREMIUM
+}
+
+enum PaymentStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+}
+
+enum PaymentNetwork {
+  TRC20
+  BEP20
+  ERC20
+}
+
+enum Chain {
+  ETHEREUM
+  BSC
+  POLYGON
+  ARBITRUM
+  BASE
+  AVALANCHE
+  FANTOM
+  SOLANA
+}
+
+enum MarketSignalType {
+  VOLUME_SPIKE
+  PRICE_ANOMALY
+  TRENDING
+  LIQUIDITY_CHANGE
+  DEX_ACTIVITY
+}
+
+// ============================================
+// Models
+// ============================================
+
+model User {
+  id                 String            @id @default(cuid())
+  email              String            @unique
+  password           String
+  subscriptionLevel SubscriptionLevel @default(FREE)
+  subscriptionExpiry DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  payments  Payment[]
+  watchlist UserWatchlist[]
+  settings  UserSettings?
+  adminLogs AdminLog[]
+
+  @@map("users")
+}
+
+model Payment {
+  id            String         @id @default(cuid())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  amountUsdt    Float
+  network       PaymentNetwork
+  txHash        String?
+  screenshotUrl String?
+  status        PaymentStatus  @default(PENDING)
+
+  createdAt DateTime @default(now())
+
+  @@map("payments")
+}
+
+model Coin {
+  id                 String   @id @default(cuid())
+  name               String
+  symbol             String
+  contractAddress    String
+  chain              Chain
+
+  totalSupply       Float?
+  circulatingSupply Float?
+  priceUsd          Float?
+  liquidityUsd     Float?
+
+  updatedAt DateTime @updatedAt
+
+  marketSignals      MarketSignal[]
+  accumulationSignals AccumulationSignal[]
+  tokenSettings      TokenSettings?
+  watchlist          UserWatchlist[]
+
+  @@unique([contractAddress, chain])
+  @@index([contractAddress, chain])
+  @@map("coins")
+}
+
+model MarketSignal {
+  id        String          @id @default(cuid())
+  coinId    String
+  coin      Coin            @relation(fields: [coinId], references: [id], onDelete: Cascade)
+
+  signalType MarketSignalType
+  score      Int
+  details    Json
+
+  createdAt DateTime @default(now())
+
+  @@index([coinId])
+  @@index([createdAt])
+  @@index([signalType])
+  @@map("market_signals")
+}
+
+model WhaleTransaction {
+  id        String   @id @default(cuid())
+  wallet    String
+  token     String
+  chain     Chain
+
+  amount    Float
+  amountUsd Float
+  txHash    String
+  timestamp DateTime
+
+  createdAt DateTime @default(now())
+
+  @@index([wallet])
+  @@index([token, chain])
+  @@index([timestamp])
+  @@map("whale_transactions")
+}
+
+model AccumulationSignal {
+  id              String   @id @default(cuid())
+  coinId          String
+  coin            Coin     @relation(fields: [coinId], references: [id], onDelete: Cascade)
+
+  amountUnits     Float
+  amountUsd       Float
+  supplyPercentage Float?
+  liquidityRatio  Float?
+
+  score     Int
+  createdAt DateTime @default(now())
+
+  @@index([coinId])
+  @@index([createdAt])
+  @@index([score])
+  @@map("accumulation_signals")
+}
+
+model UserWatchlist {
+  id           String  @id @default(cuid())
+  userId       String
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  coinId       String
+  coin         Coin    @relation(fields: [coinId], references: [id], onDelete: Cascade)
+
+  thresholdUsd        Float?
+  thresholdPercentage Float?
+
+  notificationsEnabled Boolean @default(true)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, coinId])
+  @@index([userId])
+  @@index([coinId])
+  @@map("user_watchlist")
+}
+
+model ApiUsageLog {
+  id        String   @id @default(cuid())
+  provider  String
+  endpoint  String
+  costUnits Int?
+  success   Boolean
+  createdAt DateTime @default(now())
+  meta      Json?
+
+  @@index([provider])
+  @@index([createdAt])
+  @@map("api_usage_logs")
+}
+
+model AdminLog {
+  id        String   @id @default(cuid())
+  adminId   String
+  user      User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  action    String
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([adminId])
+  @@index([createdAt])
+  @@map("admin_logs")
+}
+
+model SystemSettings {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+
+  @@index([key])
+  @@map("system_settings")
+}
+
+model UserSettings {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Threshold overrides
+  overrideLargeTransferUsd Float?
+  overrideMinUnits         Float?
+  overrideSupplyPct         Float?
+  useSystemDefaults         Boolean @default(true)
+
+  // Alert preferences
+  emailEnabled             Boolean @default(true)
+  telegramEnabled          Boolean @default(false)
+  telegramChatId           String?
+  notificationsEnabled     Boolean @default(true)
+  minSignalScore           Int     @default(65)
+  cooldownMinutes          Int     @default(30)
+
+  // Dashboard preferences
+  darkMode                 Boolean @default(false)
+  rowsPerPage              Int     @default(50)
+  timeWindow               String  @default("24h")
+
+  // Watchlist preferences
+  watchlistChains          String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("user_settings")
+}
+
+model TokenSettings {
+  id                    String   @id @default(cuid())
+  coinId                String   @unique
+  coin                  Coin     @relation(fields: [coinId], references: [id], onDelete: Cascade)
+
+  minLargeTransferUsd   Float?
+  minUnits              Float?
+  supplyPctSpecial      Float?
+  liquidityRatioSpecial Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([coinId])
+  @@map("token_settings")
+}
+
+model NormalizedEvent {
+  id            String   @id @default(cuid())
+  eventId       String   @unique
+  provider      String
+  chain         Chain
+  type          String
+
+  txHash        String
+  timestamp     DateTime
+
+  tokenContract String
+  tokenSymbol    String
+  tokenDecimals Int
+
+  fromAddress   String?
+  toAddress     String?
+
+  amount        Float
+  amountUsd     Float
+
+  rawData       Json
+
+  createdAt     DateTime @default(now())
+
+  @@index([tokenContract, chain])
+  @@index([timestamp])
+  @@index([txHash])
+  @@index([provider, chain])
+  @@map("normalized_events")
+}
+
