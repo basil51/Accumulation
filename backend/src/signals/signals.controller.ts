@@ -9,6 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { SignalService } from './services/signal.service';
+import { CacheService } from '../common/cache/cache.service';
 import { QuerySignalsDto } from './dto/query-signals.dto';
 import { JwtAuthGuard } from '../auth/guard/jwt-auth.guard';
 import { SubscriptionGuard } from '../subscription/guard/subscription.guard';
@@ -18,7 +19,10 @@ import { SubscriptionLevel } from '@prisma/client';
 @Controller('signals')
 @UseGuards(JwtAuthGuard, SubscriptionGuard)
 export class SignalsController {
-  constructor(private signalService: SignalService) {}
+  constructor(
+    private signalService: SignalService,
+    private cacheService: CacheService,
+  ) {}
 
   /**
    * GET /api/signals/accumulation
@@ -29,7 +33,21 @@ export class SignalsController {
   @RequireSubscription(SubscriptionLevel.BASIC)
   @HttpCode(HttpStatus.OK)
   async getAccumulationSignals(@Query() query: QuerySignalsDto) {
-    return await this.signalService.findAccumulationSignals(query);
+    const cacheKey = `signals:accumulation:${this.cacheService.generateSignalsKey(query)}`;
+    
+    // Try cache first
+    const cached = await this.cacheService.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    // Fetch from database
+    const result = await this.signalService.findAccumulationSignals(query);
+    
+    // Cache for 2 minutes
+    await this.cacheService.set(cacheKey, result, 120);
+    
+    return result;
   }
 
   /**
@@ -41,7 +59,21 @@ export class SignalsController {
   @RequireSubscription(SubscriptionLevel.BASIC)
   @HttpCode(HttpStatus.OK)
   async getMarketSignals(@Query() query: QuerySignalsDto) {
-    return await this.signalService.findMarketSignals(query);
+    const cacheKey = `signals:market:${this.cacheService.generateSignalsKey(query)}`;
+    
+    // Try cache first
+    const cached = await this.cacheService.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    // Fetch from database
+    const result = await this.signalService.findMarketSignals(query);
+    
+    // Cache for 2 minutes
+    await this.cacheService.set(cacheKey, result, 120);
+    
+    return result;
   }
 
   /**
@@ -88,7 +120,22 @@ export class SignalsController {
     @Param('coinId') coinId: string,
     @Query('limit') limit?: number,
   ) {
-    return await this.signalService.findSignalsByCoin(coinId, limit);
+    const limitNum = limit || 50;
+    const cacheKey = `signals:coin:${coinId}:${limitNum}`;
+    
+    // Try cache first
+    const cached = await this.cacheService.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    // Fetch from database
+    const result = await this.signalService.findSignalsByCoin(coinId, limitNum);
+    
+    // Cache for 2 minutes
+    await this.cacheService.set(cacheKey, result, 120);
+    
+    return result;
   }
 }
 

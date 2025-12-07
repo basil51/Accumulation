@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { api } from '@/lib/api';
+import { Navbar } from '@/components/navbar';
 import type { AlertItem } from '@/lib/types';
 
 export default function AlertsPage() {
@@ -132,57 +133,11 @@ export default function AlertsPage() {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black">
       {/* Top Navigation */}
-      <nav className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <div className="flex items-center gap-8">
-              <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-                Alerts
-              </h1>
-              <nav className="hidden md:flex gap-4">
-                <Link
-                  href="/dashboard"
-                  className="text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50"
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  href="/signals"
-                  className="text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50"
-                >
-                  All Signals
-                </Link>
-                <Link
-                  href="/watchlist"
-                  className="text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50"
-                >
-                  Watchlist
-                </Link>
-                <Link
-                  href="/alerts"
-                  className="text-sm font-medium text-blue-600 dark:text-blue-400"
-                >
-                  Alerts
-                </Link>
-              </nav>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                {user?.email}
-              </span>
-              <span className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400 rounded">
-                {user?.subscriptionLevel}
-              </span>
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-50"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar
+        title="Alerts"
+        user={user || undefined}
+        onLogout={handleLogout}
+      />
 
       {/* Content */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">

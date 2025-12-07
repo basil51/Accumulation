@@ -1,4 +1,4 @@
-import { PrismaClient, SubscriptionLevel } from '@prisma/client';
+import { PrismaClient, SubscriptionLevel, UserRole } from '@prisma/client';
 import * as argon2 from 'argon2';
 
 const prisma = new PrismaClient();
@@ -44,10 +44,26 @@ async function main() {
     },
   });
 
+  // Admin user
+  const adminUser = await prisma.user.upsert({
+    where: { email: 'admin@example.com' },
+    update: {
+      role: UserRole.ADMIN, // Ensure role is set even on update
+    },
+    create: {
+      email: 'admin@example.com',
+      password: testPassword,
+      role: UserRole.ADMIN,
+      subscriptionLevel: SubscriptionLevel.PREMIUM,
+      subscriptionExpiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
+    },
+  });
+
   console.log('✅ Created test users:');
   console.log('   - test@example.com (FREE) - Password: test123456');
   console.log('   - basic@example.com (BASIC) - Password: test123456');
   console.log('   - pro@example.com (PRO) - Password: test123456');
+  console.log('   - admin@example.com (ADMIN/PREMIUM) - Password: test123456');
 
   // Create sample coins (using symbol as unique identifier for upsert)
   // Note: Since Coin doesn't have unique symbol, we'll use findFirst or create
@@ -235,6 +251,10 @@ async function main() {
   console.log('\n   Email: pro@example.com');
   console.log('   Password: test123456');
   console.log('   Subscription: PRO');
+  console.log('\n   Email: admin@example.com');
+  console.log('   Password: test123456');
+  console.log('   Role: ADMIN');
+  console.log('   Subscription: PREMIUM');
 }
 
 main()

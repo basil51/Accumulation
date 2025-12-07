@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/auth-context';
 import { api } from '@/lib/api';
-import type { Coin } from '@/lib/types';
+import type { Coin, NormalizedEvent } from '@/lib/types';
 import { SignalsList } from '@/components/signals-list';
 
 export default function CoinDetailsPage() {
@@ -19,6 +19,9 @@ export default function CoinDetailsPage() {
   const [coin, setCoin] = useState<Coin | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [events, setEvents] = useState<NormalizedEvent[]>([]);
+  const [isEventsLoading, setIsEventsLoading] = useState(false);
+  const [eventsError, setEventsError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -27,21 +30,37 @@ export default function CoinDetailsPage() {
   }, [authLoading, isAuthenticated, router]);
 
   useEffect(() => {
-    const loadCoin = async (id: string) => {
+    const loadCoinAndEvents = async (id: string) => {
       setIsLoading(true);
       setError(null);
+      setIsEventsLoading(true);
+      setEventsError(null);
+
       try {
-        const data = await api.getCoin(id);
-        setCoin(data);
+        const [coinData, eventsResponse] = await Promise.all([
+          api.getCoin(id),
+          api
+            .getCoinEvents(id, 25)
+            .catch((err: any) => {
+              setEventsError(
+                err.message || 'Failed to load recent events for this coin',
+              );
+              return { data: [] as NormalizedEvent[] };
+            }),
+        ]);
+
+        setCoin(coinData);
+        setEvents(eventsResponse.data);
       } catch (err: any) {
         setError(err.message || 'Failed to load coin details');
       } finally {
         setIsLoading(false);
+        setIsEventsLoading(false);
       }
     };
 
     if (isAuthenticated && coinId) {
-      loadCoin(coinId);
+      loadCoinAndEvents(coinId);
     }
   }, [isAuthenticated, coinId]);
 
@@ -75,6 +94,15 @@ export default function CoinDetailsPage() {
     if (address.length <= 10) return address;
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
+
+  const formatEventTime = (timestamp: string) =>
+    new Date(timestamp).toLocaleString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
 
   if (authLoading || isLoading) {
     return (
@@ -145,6 +173,18 @@ export default function CoinDetailsPage() {
                   className="text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50"
                 >
                   Alerts
+                </Link>
+                <Link
+                  href="/subscription"
+                  className="text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50"
+                >
+                  Subscription
+                </Link>
+                <Link
+                  href="/settings"
+                  className="text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50"
+                >
+                  Settings
                 </Link>
               </nav>
             </div>
@@ -234,6 +274,96 @@ export default function CoinDetailsPage() {
             </p>
             <SignalsList type="market" initialLimit={9} filters={{ coinId }} />
           </div>
+        </section>
+
+        {/* Recent on-chain events */}
+        <section className="mt-10 space-y-4">
+          <div>
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50 mb-1">
+              Recent On‑Chain Events
+            </h3>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              Normalized transfer and swap events associated with this coin&apos;s
+              contract, ordered by time (most recent first).
+            </p>
+          </div>
+
+          {isEventsLoading ? (
+            <div className="text-sm text-zinc-600 dark:text-zinc-400">
+              Loading recent events...
+            </div>
+          ) : eventsError ? (
+            <div className="text-sm text-red-600 dark:text-red-400">
+              {eventsError}
+            </div>
+          ) : events.length === 0 ? (
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              No recent events found for this coin yet.
+            </p>
+          ) : (
+            <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+              <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-800 text-sm">
+                <thead className="bg-zinc-50 dark:bg-zinc-900/50">
+                  <tr>
+                    <th className="px-4 py-2 text-left font-medium text-zinc-500 dark:text-zinc-400">
+                      Time
+                    </th>
+                    <th className="px-4 py-2 text-left font-medium text-zinc-500 dark:text-zinc-400">
+                      Type
+                    </th>
+                    <th className="px-4 py-2 text-left font-medium text-zinc-500 dark:text-zinc-400">
+                      Amount
+                    </th>
+                    <th className="px-4 py-2 text-left font-medium text-zinc-500 dark:text-zinc-400">
+                      USD
+                    </th>
+                    <th className="px-4 py-2 text-left font-medium text-zinc-500 dark:text-zinc-400">
+                      From → To
+                    </th>
+                    <th className="px-4 py-2 text-left font-medium text-zinc-500 dark:text-zinc-400">
+                      Tx Hash
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                  {events.map((event) => (
+                    <tr key={event.id}>
+                      <td className="px-4 py-2 text-xs text-zinc-600 dark:text-zinc-400">
+                        {formatEventTime(event.timestamp)}
+                      </td>
+                      <td className="px-4 py-2 text-xs font-medium text-zinc-800 dark:text-zinc-100">
+                        {event.type}
+                      </td>
+                      <td className="px-4 py-2 text-sm text-zinc-800 dark:text-zinc-100">
+                        {event.amount.toLocaleString()}
+                      </td>
+                      <td className="px-4 py-2 text-sm text-zinc-800 dark:text-zinc-100">
+                        {event.amountUsd !== undefined && event.amountUsd !== null
+                          ? `$${event.amountUsd.toLocaleString(undefined, {
+                              maximumFractionDigits: 2,
+                            })}`
+                          : '—'}
+                      </td>
+                      <td className="px-4 py-2 text-xs text-zinc-700 dark:text-zinc-200">
+                        <span className="font-mono">
+                          {shortenAddress(event.fromAddress)}{' '}
+                          <span className="text-zinc-500 dark:text-zinc-400">
+                            →
+                          </span>{' '}
+                          {shortenAddress(event.toAddress)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2 text-xs text-zinc-700 dark:text-zinc-200">
+                        <span className="font-mono">
+                          {shortenAddress(event.txHash)}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
       </main>
     </div>

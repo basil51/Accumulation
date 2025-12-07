@@ -3,8 +3,11 @@ import { api } from './api';
 export interface User {
   id: string;
   email: string;
+  role?: 'USER' | 'ADMIN' | 'SUPER_ADMIN' | string;
   subscriptionLevel: string;
-  subscriptionExpiry?: string;
+  subscriptionExpiry?: string | null | undefined;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AuthState {

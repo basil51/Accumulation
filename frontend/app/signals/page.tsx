@@ -2,10 +2,10 @@
 
 import { useState, useMemo } from 'react';
 import { useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { SignalsList } from '@/components/signals-list';
+import { Navbar } from '@/components/navbar';
 import type { QuerySignalsParams } from '@/lib/types';
 
 type SignalTab = 'accumulation' | 'market';
@@ -15,7 +15,7 @@ export default function SignalsPage() {
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<SignalTab>('accumulation');
-  const [coinId, setCoinId] = useState('');
+  const [symbol, setSymbol] = useState('');
   const [minScore, setMinScore] = useState<string>('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -38,17 +38,17 @@ export default function SignalsPage() {
 
   const filters: QuerySignalsParams = useMemo(
     () => ({
-      coinId: coinId || undefined,
+      symbol: symbol || undefined,
       minScore: minScore ? Number(minScore) : undefined,
       startDate: startDate || undefined,
       endDate: endDate || undefined,
       signalType: activeTab === 'market' && signalType ? signalType : undefined,
     }),
-    [coinId, minScore, startDate, endDate, activeTab, signalType],
+    [symbol, minScore, startDate, endDate, activeTab, signalType],
   );
 
   const handleResetFilters = () => {
-    setCoinId('');
+    setSymbol('');
     setMinScore('');
     setStartDate('');
     setEndDate('');
@@ -70,57 +70,11 @@ export default function SignalsPage() {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black">
       {/* Top Navigation */}
-      <nav className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <div className="flex items-center gap-8">
-              <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-                All Signals
-              </h1>
-              <nav className="hidden md:flex gap-4">
-                <Link
-                  href="/dashboard"
-                  className="text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50"
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  href="/signals"
-                  className="text-sm font-medium text-blue-600 dark:text-blue-400"
-                >
-                  All Signals
-                </Link>
-                <Link
-                  href="/watchlist"
-                  className="text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50"
-                >
-                  Watchlist
-                </Link>
-                <Link
-                  href="/alerts"
-                  className="text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50"
-                >
-                  Alerts
-                </Link>
-              </nav>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                {user?.email}
-              </span>
-              <span className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400 rounded">
-                {user?.subscriptionLevel}
-              </span>
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-50"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar
+        title="All Signals"
+        user={user || undefined}
+        onLogout={handleLogout}
+      />
 
       {/* Page Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -165,13 +119,13 @@ export default function SignalsPage() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 flex-1">
               <div>
                 <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">
-                  Coin ID
+                  Symbol
                 </label>
                 <input
                   type="text"
-                  value={coinId}
-                  onChange={(e) => setCoinId(e.target.value)}
-                  placeholder="Optional coin ID"
+                  value={symbol}
+                  onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+                  placeholder="e.g. ETH, BTC, USDC"
                   className="w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>

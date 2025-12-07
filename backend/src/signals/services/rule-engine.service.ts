@@ -1,9 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { IRule, RuleContext, RuleResult, DetectionConfig } from '../interfaces/rule.interface';
+import { IRule, RuleContext, RuleResult, DetectionConfig, TokenSettings } from '../interfaces/rule.interface';
 import { ScoringService } from './scoring.service';
 import { SignalService } from './signal.service';
 import { AlertsService } from '../../alerts/alerts.service';
+import { TokenSettingsService } from '../../admin/token-settings.service';
 import { HighVolumeRule } from '../rules/high-volume.rule';
 import { PriceAnomalyRule } from '../rules/price-anomaly.rule';
 import { AccumulationPatternRule } from '../rules/accumulation-pattern.rule';
@@ -22,6 +23,7 @@ export class RuleEngineService {
     private scoringService: ScoringService,
     private signalService: SignalService,
     private alertsService: AlertsService,
+    private tokenSettingsService: TokenSettingsService,
     private highVolumeRule: HighVolumeRule,
     private priceAnomalyRule: PriceAnomalyRule,
     private accumulationPatternRule: AccumulationPatternRule,
@@ -71,8 +73,29 @@ export class RuleEngineService {
       // Fetch baseline metrics (simplified - in production, calculate from historical data)
       const baseline = await this.getBaselineMetrics(coin.id);
 
-      // Get configuration (in production, fetch from SystemSettings)
-      const config = this.scoringService.getDefaultConfig();
+      // Get system default configuration
+      const defaultConfig = this.scoringService.getDefaultConfig();
+
+      // Fetch token-specific settings (if any)
+      const tokenSettingsRecord = await this.tokenSettingsService.getTokenSettings(coin.id);
+      const tokenSettings: TokenSettings | undefined = tokenSettingsRecord
+        ? {
+            minLargeTransferUsd: tokenSettingsRecord.minLargeTransferUsd || undefined,
+            minUnits: tokenSettingsRecord.minUnits || undefined,
+            supplyPctSpecial: tokenSettingsRecord.supplyPctSpecial || undefined,
+            liquidityRatioSpecial: tokenSettingsRecord.liquidityRatioSpecial || undefined,
+          }
+        : undefined;
+
+      // Merge token-specific settings with system defaults
+      const config: DetectionConfig = {
+        ...defaultConfig,
+        // Override with token-specific thresholds if available
+        largeTransferUsd: tokenSettings?.minLargeTransferUsd ?? defaultConfig.largeTransferUsd,
+        unitsThreshold: tokenSettings?.minUnits ?? defaultConfig.unitsThreshold,
+        supplyPctThreshold: tokenSettings?.supplyPctSpecial ?? defaultConfig.supplyPctThreshold,
+        liquidityRatioThreshold: tokenSettings?.liquidityRatioSpecial ?? defaultConfig.liquidityRatioThreshold,
+      };
 
       // Build rule context
       const context: RuleContext = {
@@ -88,6 +111,7 @@ export class RuleEngineService {
           : undefined,
         baseline,
         config,
+        tokenSettings,
       };
 
       // Evaluate all rules
@@ -382,4 +406,3 @@ export class RuleEngineService {
     };
   }
 }
-

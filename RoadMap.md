@@ -99,7 +99,31 @@ Users will get:
 * circulating_supply
 * price_usd
 * liquidity_usd
+* is_active (boolean) - Active trading coin flag
+* is_famous (boolean) - Famous/popular coin flag
 * updated_at
+
+**Note:** The Coin table serves as the master database of all active coins tracked by the platform. Each coin is uniquely identified by `contract_address + chain` combination. This table will be populated and maintained as new coins are discovered through data ingestion.
+
+**Coin Import Process:**
+1. Import top 1000 coins from CoinGecko (sorted by market cap, default sorting)
+2. Filter coins with market cap > $25k (coin #1000 has ~$24k market cap, so $25k threshold ensures quality)
+3. For each coin, extract all supported chains from CoinGecko platforms data
+4. Create coin records for each chain the coin exists on
+5. Automatically mark top 100 coins as "famous" and top 100 as "active"
+
+### **ChainInfo**
+
+* id
+* chain (enum: ETHEREUM, BSC, POLYGON, ARBITRUM, BASE, AVALANCHE, FANTOM, SOLANA)
+* name (display name)
+* is_active (boolean) - Whether signal detection is active for this chain
+* coin_count (number) - Number of coins on this chain
+* signal_count (number) - Number of signals detected on this chain
+* created_at
+* updated_at
+
+**Note:** The ChainInfo table tracks all supported blockchain networks. After importing coins, this table is automatically populated with all chains found. Currently, signal detection is primarily focused on Ethereum, but the infrastructure supports all listed chains.
 
 ### **MarketSignals**
 
@@ -223,6 +247,7 @@ Refresh market metrics and trending data.
 * DEX Swaps
 * Liquidity
 * Market Signals
+* **Search by Symbol** (UX Improvement) - Users can filter signals by coin symbol (e.g., "ETH", "BTC") instead of requiring coin ID
 
 ### 3) **Coins List**
 
@@ -250,6 +275,13 @@ Refresh market metrics and trending data.
 * Thresholds
 * Watchlist
 * Notification preferences
+
+### **Watchlist UX Improvements** (Planned)
+
+* **Chain Selection First** - Users first select which chain (Ethereum, Polygon, Arbitrum, Base, etc.)
+* **Coin Selection** - After selecting chain, users see a searchable list of active coins for that chain
+* **Coin Database** - Maintain a comprehensive database of active coins with chain information
+* **Better UX** - No more manual coin ID entry; intuitive dropdown/autocomplete interface
 
 ### 7) **Subscription Page**
 

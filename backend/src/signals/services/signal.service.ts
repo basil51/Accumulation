@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { CompressionService } from '../../common/compression/compression.service';
 import { MarketSignalType, Chain, Prisma } from '@prisma/client';
 import { RuleResult } from '../interfaces/rule.interface';
 import { QuerySignalsDto } from '../dto/query-signals.dto';
@@ -27,7 +28,10 @@ export interface CreateMarketSignalInput {
 export class SignalService {
   private readonly logger = new Logger(SignalService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private compressionService: CompressionService,
+  ) {}
 
   /**
    * Create an AccumulationSignal record
@@ -61,7 +65,7 @@ export class SignalService {
    */
   async createMarketSignal(input: CreateMarketSignalInput) {
     try {
-      const details = {
+      const evidenceData = {
         evidence: input.evidence.map((r) => ({
           rule: r.ruleName,
           score: r.score,
@@ -70,6 +74,16 @@ export class SignalService {
         })),
         eventIds: input.eventIds,
         timestamp: new Date().toISOString(),
+      };
+
+      // Compress evidence to reduce DB load
+      const compressedEvidence = await this.compressionService.compressToBase64(
+        evidenceData,
+      );
+
+      const details = {
+        compressed: true,
+        evidence: compressedEvidence,
       };
 
       const signal = await this.prisma.marketSignal.create({
@@ -129,11 +143,38 @@ export class SignalService {
    * Get all accumulation signals with filtering and pagination
    */
   async findAccumulationSignals(query: QuerySignalsDto) {
-    const { coinId, minScore, startDate, endDate, page = 1, limit = 50 } = query;
+    const { coinId, symbol, minScore, startDate, endDate, page = 1, limit = 50 } = query;
 
     const where: Prisma.AccumulationSignalWhereInput = {};
 
-    if (coinId) {
+    // If symbol is provided, find coins by symbol (partial match) and filter by their IDs
+    if (symbol && !coinId) {
+      const coins = await this.prisma.coin.findMany({
+        where: {
+          symbol: {
+            contains: symbol.toUpperCase(),
+            mode: 'insensitive',
+          },
+        },
+        select: { id: true },
+      });
+      
+      // Filter by matching coins (even if empty, this will show no results)
+      if (coins.length > 0) {
+        where.coinId = { in: coins.map((c) => c.id) };
+      } else {
+        // If no coins match the partial symbol, return empty result
+        return {
+          data: [],
+          meta: {
+            total: 0,
+            page,
+            limit,
+            totalPages: 0,
+          },
+        };
+      }
+    } else if (coinId) {
       where.coinId = coinId;
     }
 
@@ -191,6 +232,7 @@ export class SignalService {
   async findMarketSignals(query: QuerySignalsDto) {
     const {
       coinId,
+      symbol,
       signalType,
       minScore,
       startDate,
@@ -201,7 +243,34 @@ export class SignalService {
 
     const where: Prisma.MarketSignalWhereInput = {};
 
-    if (coinId) {
+    // If symbol is provided, find coins by symbol (partial match) and filter by their IDs
+    if (symbol && !coinId) {
+      const coins = await this.prisma.coin.findMany({
+        where: {
+          symbol: {
+            contains: symbol.toUpperCase(),
+            mode: 'insensitive',
+          },
+        },
+        select: { id: true },
+      });
+      
+      // Filter by matching coins (even if empty, this will show no results)
+      if (coins.length > 0) {
+        where.coinId = { in: coins.map((c) => c.id) };
+      } else {
+        // If no coins match the partial symbol, return empty result
+        return {
+          data: [],
+          meta: {
+            total: 0,
+            page,
+            limit,
+            totalPages: 0,
+          },
+        };
+      }
+    } else if (coinId) {
       where.coinId = coinId;
     }
 
@@ -270,15 +339,37 @@ export class SignalService {
   }
 
   /**
-   * Get market signal by ID
+   * Get market signal by ID and decompress evidence if needed
    */
   async findMarketSignalById(id: string) {
-    return await this.prisma.marketSignal.findUnique({
+    const signal = await this.prisma.marketSignal.findUnique({
       where: { id },
       include: {
         coin: true,
       },
     });
+
+    if (!signal) {
+      return null;
+    }
+
+    // Decompress evidence if it's compressed
+    if (signal.details && typeof signal.details === 'object') {
+      const details = signal.details as any;
+      if (details.compressed && details.evidence) {
+        try {
+          const decompressed = await this.compressionService.decompressFromBase64(
+            details.evidence,
+          );
+          signal.details = decompressed;
+        } catch (error) {
+          this.logger.warn(`Failed to decompress evidence for signal ${id}:`, error);
+          // Keep original if decompression fails
+        }
+      }
+    }
+
+    return signal;
   }
 
   /**

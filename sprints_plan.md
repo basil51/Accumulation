@@ -229,10 +229,22 @@ Prepare for test users.
 * Fix high-priority bugs
 * Add token-specific tuning
 * Improve UI usability
+* **UX Improvements:**
+  * **Signals Page:** Change coin filter from "Coin ID" to "Symbol" (e.g., "ETH", "BTC") for better user experience
+  * **Watchlist Page:** Implement chain-first selection flow:
+    * User selects chain (Ethereum, Polygon, Arbitrum, Base, etc.)
+    * System displays searchable list of active coins for selected chain
+    * User selects coin from dropdown/autocomplete
+  * **Coin Database:** Ensure Coin table contains all active coins with chain information
+  * **Backend API:** Add endpoints for:
+    * Search coins by symbol
+    * List coins by chain
+    * Autocomplete coin search
 
 ### Deliverables
 
 * Beta-ready platform used by real traders
+* Improved UX for signals filtering and watchlist management
 
 ---
 
@@ -257,12 +269,51 @@ Release to public.
 
 ---
 
-# Total Expected Timeline
+# 🟦 Sprint 10 — Coin Management System (2–3 days)
 
-**Estimated total: 30–40 development days** (solo founder pace).
+### Goals
+
+Enable admins to manage coins (add, update, delete, mark as active/famous) through a user-friendly UI. Import top coins from CoinGecko and track supported chains.
+
+### Tasks
+
+* Create admin coin management UI
+* Add coin creation endpoint
+* Add coin deletion endpoint
+* Add coin search/filter in admin panel
+* Integrate with existing coin status endpoint
+* **CoinGecko Import Function**
+  * Fetch top 1000 coins from CoinGecko (sorted by market cap - default sorting)
+  * Filter coins with market cap > $25k (coin #1000 has ~$24k, so $25k ensures quality)
+  * Extract chain information from CoinGecko platforms data
+  * Create coins for all supported chains
+  * Automatic active/famous flagging (top 100 = famous, top 100 = active)
+* **Chain Management**
+  * Create ChainInfo table to track supported chains
+  * Auto-populate chains during coin import
+  * Chain statistics (coin count, signal count)
+  * Chain active/inactive status management
+  * Chains list UI in admin panel
+* Add bulk operations (mark multiple coins as active/famous) - Future
+
+### Deliverables
+
+* Complete coin management interface in admin panel
+* CRUD operations for coins
+* Active/Famous coin management
+* Coin search and filtering
+* CoinGecko import functionality (top 1000 coins)
+* Chain management system with statistics
+* Chains list showing all supported chains
+* **Note:** Currently working primarily with Ethereum chain, but infrastructure supports all chains for future expansion
 
 ---
 
+# Total Expected Timeline
+
+**Estimated total: 32–43 development days** (solo founder pace).
+
+---
 # Priorities
 
 If resources tighten, prioritize:

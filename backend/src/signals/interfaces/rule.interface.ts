@@ -17,6 +17,16 @@ export interface RuleResult {
 }
 
 /**
+ * Token-specific settings override
+ */
+export interface TokenSettings {
+  minLargeTransferUsd?: number;
+  minUnits?: number;
+  supplyPctSpecial?: number;
+  liquidityRatioSpecial?: number;
+}
+
+/**
  * Context data needed for rule evaluation
  */
 export interface RuleContext {
@@ -36,8 +46,10 @@ export interface RuleContext {
     avgSwapUsd?: number;
     recentPrice?: number;
   };
-  /** Configuration thresholds */
+  /** Configuration thresholds (merged with token-specific overrides) */
   config: DetectionConfig;
+  /** Token-specific threshold overrides (if any) */
+  tokenSettings?: TokenSettings;
 }
 
 /**

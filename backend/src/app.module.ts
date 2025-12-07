@@ -1,9 +1,16 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './common/prisma/prisma.module';
+import { CacheModule } from './common/cache/cache.module';
+import { LoggerModule } from './common/logger/logger.module';
+import { ErrorRecoveryModule } from './common/error-recovery/error-recovery.module';
+import { BatchingModule } from './common/batching/batching.module';
+import { CompressionModule } from './common/compression/compression.module';
 import { AuthModule } from './auth/auth.module';
 import { SubscriptionModule } from './subscription/subscription.module';
 import { WatchlistModule } from './watchlist/watchlist.module';
@@ -14,11 +21,25 @@ import { NormalizationModule } from './normalization/normalization.module';
 import { EventsModule } from './events/events.module';
 import { SignalsModule } from './signals/signals.module';
 import { AlertsModule } from './alerts/alerts.module';
+import { AdminModule } from './admin/admin.module';
+import { FeedbackModule } from './feedback/feedback.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+    }),
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        throttlers: [
+          {
+            ttl: configService.get('THROTTLE_TTL') || 60,
+            limit: configService.get('THROTTLE_LIMIT') || 100,
+          },
+        ],
+      }),
+      inject: [ConfigService],
     }),
     BullModule.forRootAsync({
       imports: [ConfigModule],
@@ -31,6 +52,11 @@ import { AlertsModule } from './alerts/alerts.module';
       inject: [ConfigService],
     }),
     PrismaModule,
+    CacheModule,
+    LoggerModule,
+    ErrorRecoveryModule,
+    BatchingModule,
+    CompressionModule,
     AuthModule,
     SubscriptionModule,
     WatchlistModule,
@@ -41,9 +67,17 @@ import { AlertsModule } from './alerts/alerts.module';
     EventsModule,
     SignalsModule,
     AlertsModule,
+    AdminModule,
+    FeedbackModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}
 

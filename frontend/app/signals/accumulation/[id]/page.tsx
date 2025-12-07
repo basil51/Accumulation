@@ -189,10 +189,12 @@ export default function AccumulationSignalPage() {
               <div className="flex items-center justify-between">
                 <dt className="text-zinc-500 dark:text-zinc-400">Units</dt>
                 <dd className="font-medium text-zinc-900 dark:text-zinc-50">
-                  {signal.amountUnits.toLocaleString()}
+                  {signal.amountUnits != null
+                    ? signal.amountUnits.toLocaleString()
+                    : 'N/A'}
                 </dd>
               </div>
-              {signal.supplyPercentage !== undefined && (
+              {signal.supplyPercentage != null && (
                 <div className="flex items-center justify-between">
                   <dt className="text-zinc-500 dark:text-zinc-400">
                     Supply Percentage
@@ -202,7 +204,7 @@ export default function AccumulationSignalPage() {
                   </dd>
                 </div>
               )}
-              {signal.liquidityRatio !== undefined && (
+              {signal.liquidityRatio != null && (
                 <div className="flex items-center justify-between">
                   <dt className="text-zinc-500 dark:text-zinc-400">
                     Liquidity Ratio

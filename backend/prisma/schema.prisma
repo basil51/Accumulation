@@ -21,6 +21,12 @@ enum SubscriptionLevel {
   PREMIUM
 }
 
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
 enum PaymentStatus {
   PENDING
   CONFIRMED
@@ -42,6 +48,20 @@ enum Chain {
   AVALANCHE
   FANTOM
   SOLANA
+  BITCOIN
+}
+
+model ChainInfo {
+  id          String   @id @default(cuid())
+  chain       Chain    @unique
+  name        String
+  isActive    Boolean  @default(true)
+  coinCount   Int      @default(0) // Number of coins on this chain
+  signalCount Int      @default(0) // Number of signals detected on this chain
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("chain_info")
 }
 
 enum MarketSignalType {
@@ -60,7 +80,8 @@ model User {
   id                 String            @id @default(cuid())
   email              String            @unique
   password           String
-  subscriptionLevel SubscriptionLevel @default(FREE)
+  role               UserRole          @default(USER)
+  subscriptionLevel  SubscriptionLevel @default(FREE)
   subscriptionExpiry DateTime?
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
@@ -70,14 +91,15 @@ model User {
   settings  UserSettings?
   adminLogs AdminLog[]
   alerts    Alert[]
+  feedback  Feedback[]
 
   @@map("users")
 }
 
 model Payment {
-  id            String         @id @default(cuid())
-  userId        String
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   amountUsdt    Float
   network       PaymentNetwork
@@ -91,52 +113,65 @@ model Payment {
 }
 
 model Coin {
-  id                 String   @id @default(cuid())
-  name               String
-  symbol             String
-  contractAddress    String
-  chain              Chain
+  id              String  @id @default(cuid())
+  name            String
+  symbol          String
+  contractAddress String? // Optional for native coins
+  chain           Chain
 
   totalSupply       Float?
   circulatingSupply Float?
   priceUsd          Float?
-  liquidityUsd     Float?
+  liquidityUsd      Float?
+
+  // Coin classification flags
+  isActive Boolean @default(false) // Active trading coin
+  isFamous Boolean @default(false) // Famous/popular coin
 
   updatedAt DateTime @updatedAt
 
-  marketSignals      MarketSignal[]
+  marketSignals       MarketSignal[]
   accumulationSignals AccumulationSignal[]
-  tokenSettings      TokenSettings?
-  watchlist          UserWatchlist[]
-  alerts             Alert[]
+  tokenSettings       TokenSettings?
+  watchlist           UserWatchlist[]
+  alerts              Alert[]
 
   @@unique([contractAddress, chain])
+  @@unique([symbol, chain]) // For native coins without contract addresses
   @@index([contractAddress, chain])
+  @@index([symbol])
+  @@index([chain])
+  @@index([isActive])
+  @@index([isFamous])
   @@map("coins")
 }
 
 model MarketSignal {
-  id        String          @id @default(cuid())
-  coinId    String
-  coin      Coin            @relation(fields: [coinId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  coinId String
+  coin   Coin   @relation(fields: [coinId], references: [id], onDelete: Cascade)
 
-  signalType MarketSignalType
-  score      Int
-  details    Json
+  signalType            MarketSignalType
+  score                 Int
+  details               Json
+  falsePositive         Boolean          @default(false)
+  markedFalsePositiveAt DateTime?
+  markedFalsePositiveBy String?
 
   createdAt DateTime @default(now())
 
   @@index([coinId])
   @@index([createdAt])
   @@index([signalType])
+  @@index([falsePositive])
   @@map("market_signals")
 }
 
 model WhaleTransaction {
-  id        String   @id @default(cuid())
-  wallet    String
-  token     String
-  chain     Chain
+  id     String @id @default(cuid())
+  wallet String
+  token  String
+  chain  Chain
 
   amount    Float
   amountUsd Float
@@ -152,31 +187,36 @@ model WhaleTransaction {
 }
 
 model AccumulationSignal {
-  id              String   @id @default(cuid())
-  coinId          String
-  coin            Coin     @relation(fields: [coinId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  coinId String
+  coin   Coin   @relation(fields: [coinId], references: [id], onDelete: Cascade)
 
-  amountUnits     Float
-  amountUsd       Float
+  amountUnits      Float
+  amountUsd        Float
   supplyPercentage Float?
-  liquidityRatio  Float?
+  liquidityRatio   Float?
 
-  score     Int
+  score                 Int
+  falsePositive         Boolean   @default(false)
+  markedFalsePositiveAt DateTime?
+  markedFalsePositiveBy String?
+
   createdAt DateTime @default(now())
 
   @@index([coinId])
   @@index([createdAt])
   @@index([score])
+  @@index([falsePositive])
   @@map("accumulation_signals")
 }
 
 model UserWatchlist {
-  id           String  @id @default(cuid())
-  userId       String
-  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  coinId       String
-  coin         Coin    @relation(fields: [coinId], references: [id], onDelete: Cascade)
+  coinId String
+  coin   Coin   @relation(fields: [coinId], references: [id], onDelete: Cascade)
 
   thresholdUsd        Float?
   thresholdPercentage Float?
@@ -230,31 +270,31 @@ model SystemSettings {
 }
 
 model UserSettings {
-  id                    String   @id @default(cuid())
-  userId                String   @unique
-  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Threshold overrides
   overrideLargeTransferUsd Float?
   overrideMinUnits         Float?
-  overrideSupplyPct         Float?
-  useSystemDefaults         Boolean @default(true)
+  overrideSupplyPct        Float?
+  useSystemDefaults        Boolean @default(true)
 
   // Alert preferences
-  emailEnabled             Boolean @default(true)
-  telegramEnabled          Boolean @default(false)
-  telegramChatId           String?
-  notificationsEnabled     Boolean @default(true)
-  minSignalScore           Int     @default(65)
-  cooldownMinutes          Int     @default(30)
+  emailEnabled         Boolean @default(true)
+  telegramEnabled      Boolean @default(false)
+  telegramChatId       String?
+  notificationsEnabled Boolean @default(true)
+  minSignalScore       Int     @default(65)
+  cooldownMinutes      Int     @default(30)
 
   // Dashboard preferences
-  darkMode                 Boolean @default(false)
-  rowsPerPage              Int     @default(50)
-  timeWindow               String  @default("24h")
+  darkMode    Boolean @default(false)
+  rowsPerPage Int     @default(50)
+  timeWindow  String  @default("24h")
 
   // Watchlist preferences
-  watchlistChains          String[]
+  watchlistChains String[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -264,9 +304,9 @@ model UserSettings {
 }
 
 model TokenSettings {
-  id                    String   @id @default(cuid())
-  coinId                String   @unique
-  coin                  Coin     @relation(fields: [coinId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  coinId String @unique
+  coin   Coin   @relation(fields: [coinId], references: [id], onDelete: Cascade)
 
   minLargeTransferUsd   Float?
   minUnits              Float?
@@ -281,30 +321,30 @@ model TokenSettings {
 }
 
 model NormalizedEvent {
-  id            String   @id @default(cuid())
-  eventId       String   @unique
-  provider      String
-  chain         Chain
-  type          String
+  id       String @id @default(cuid())
+  eventId  String @unique
+  provider String
+  chain    Chain
+  type     String
 
-  txHash        String
-  timestamp     DateTime
-  blockNumber   Int?
+  txHash      String
+  timestamp   DateTime
+  blockNumber Int?
 
   tokenContract String
   tokenSymbol   String?
   tokenDecimals Int?
 
-  fromAddress   String
-  toAddress     String
+  fromAddress String
+  toAddress   String
 
-  amount        Float
-  amountUsd     Float?
+  amount    Float
+  amountUsd Float?
 
-  metadata      Json?
-  rawData       Json
+  metadata Json?
+  rawData  Json
 
-  createdAt     DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([tokenContract, chain])
   @@index([timestamp])
@@ -314,30 +354,30 @@ model NormalizedEvent {
 }
 
 model Alert {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Signal reference (can be either MarketSignal or AccumulationSignal)
-  signalType String  // 'market' or 'accumulation'
-  signalId   String  // ID of the signal
+  signalType String // 'market' or 'accumulation'
+  signalId   String // ID of the signal
 
   // Alert metadata
-  title     String
-  message   String
-  coinId    String?
-  coin      Coin?   @relation(fields: [coinId], references: [id], onDelete: SetNull)
+  title   String
+  message String
+  coinId  String?
+  coin    Coin?   @relation(fields: [coinId], references: [id], onDelete: SetNull)
 
-  score     Int
-  read      Boolean @default(false)
+  score Int
+  read  Boolean @default(false)
 
   // Notification delivery status
-  emailSent    Boolean @default(false)
-  telegramSent Boolean @default(false)
-  emailSentAt  DateTime?
+  emailSent      Boolean   @default(false)
+  telegramSent   Boolean   @default(false)
+  emailSentAt    DateTime?
   telegramSentAt DateTime?
 
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
   readAt    DateTime?
 
   @@index([userId])
@@ -345,4 +385,45 @@ model Alert {
   @@index([createdAt])
   @@index([coinId])
   @@map("alerts")
+}
+
+model Feedback {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type     FeedbackType
+  category String? // 'bug', 'feature', 'ui', 'signal_quality', 'performance'
+  subject  String
+  message  String
+  metadata Json? // Additional context (browser, device, signal ID, etc.)
+
+  status     FeedbackStatus @default(PENDING)
+  adminNotes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+  @@map("feedback")
+}
+
+enum FeedbackType {
+  BUG_REPORT
+  FEATURE_REQUEST
+  UI_UX_FEEDBACK
+  SIGNAL_QUALITY
+  PERFORMANCE_ISSUE
+  GENERAL
+}
+
+enum FeedbackStatus {
+  PENDING
+  REVIEWED
+  IN_PROGRESS
+  RESOLVED
+  REJECTED
 }

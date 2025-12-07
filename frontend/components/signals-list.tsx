@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { SignalCard } from './signal-card';
+import { LoadingSpinner } from './loading-spinner';
 import type {
   AccumulationSignal,
   MarketSignal,
@@ -72,7 +73,7 @@ export function SignalsList({
   if (isLoading && signals.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-zinc-600 dark:text-zinc-400">Loading signals...</div>
+        <LoadingSpinner size="lg" text="Loading signals..." />
       </div>
     );
   }

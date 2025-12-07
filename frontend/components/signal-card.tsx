@@ -13,7 +13,10 @@ export function SignalCard({ signal, type }: SignalCardProps) {
     return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
   };
 
-  const formatCurrency = (value: number) => {
+  const formatCurrency = (value: number | undefined | null) => {
+    if (value === undefined || value === null || isNaN(value)) {
+      return '$0.00';
+    }
     if (value >= 1000000) return `$${(value / 1000000).toFixed(2)}M`;
     if (value >= 1000) return `$${(value / 1000).toFixed(2)}K`;
     return `$${value.toFixed(2)}`;
@@ -69,19 +72,25 @@ export function SignalCard({ signal, type }: SignalCardProps) {
           <div>
             <p className="text-zinc-500 dark:text-zinc-400">Supply %</p>
             <p className="font-medium text-zinc-900 dark:text-zinc-50">
-              {accSignal.supplyPercentage.toFixed(3)}%
+              {accSignal.supplyPercentage != null
+                ? `${accSignal.supplyPercentage.toFixed(3)}%`
+                : 'N/A'}
             </p>
           </div>
           <div>
             <p className="text-zinc-500 dark:text-zinc-400">Units</p>
             <p className="font-medium text-zinc-900 dark:text-zinc-50">
-              {accSignal.amountUnits.toLocaleString()}
+              {accSignal.amountUnits != null
+                ? accSignal.amountUnits.toLocaleString()
+                : 'N/A'}
             </p>
           </div>
           <div>
             <p className="text-zinc-500 dark:text-zinc-400">Liquidity Ratio</p>
             <p className="font-medium text-zinc-900 dark:text-zinc-50">
-              {accSignal.liquidityRatio.toFixed(2)}x
+              {accSignal.liquidityRatio != null
+                ? `${accSignal.liquidityRatio.toFixed(2)}x`
+                : 'N/A'}
             </p>
           </div>
         </div>

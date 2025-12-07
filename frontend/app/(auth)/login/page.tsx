@@ -9,6 +9,7 @@ const TEST_USERS = [
   { email: 'test@example.com', password: 'test123456', label: 'FREE' },
   { email: 'basic@example.com', password: 'test123456', label: 'BASIC' },
   { email: 'pro@example.com', password: 'test123456', label: 'PRO' },
+  { email: 'admin@example.com', password: 'test123456', label: 'ADMIN', highlight: true },
 ];
 
 export default function LoginPage() {
@@ -120,7 +121,11 @@ export default function LoginPage() {
                   key={testUser.email}
                   type="button"
                   onClick={() => handleQuickLogin(testUser)}
-                  className="w-full px-3 py-2 text-xs font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-md transition-colors"
+                  className={`w-full px-3 py-2 text-xs font-medium rounded-md transition-colors ${
+                    testUser.highlight
+                      ? 'text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600'
+                      : 'text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                  }`}
                 >
                   {testUser.label} - {testUser.email}
                 </button>

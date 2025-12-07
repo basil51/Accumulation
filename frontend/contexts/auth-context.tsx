@@ -23,9 +23,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Check if user is authenticated on mount
     const token = api.getToken();
     if (token) {
-      // Try to fetch user info (you might need to add a /auth/me endpoint)
-      // For now, we'll just check if token exists
-      setIsLoading(false);
+      // Fetch user info from the backend
+      api.getCurrentUser()
+        .then((user) => {
+          setUser(user);
+          setIsLoading(false);
+        })
+        .catch((error) => {
+          // Token might be invalid, expired, or backend unavailable
+          // Log error details for debugging (only in development)
+          if (process.env.NODE_ENV === 'development') {
+            const errorDetails = {
+              message: error?.message || error?.toString() || 'Unknown error',
+              statusCode: error?.statusCode,
+              name: error?.name,
+              stack: error?.stack,
+              token: token ? 'present' : 'missing',
+            };
+            console.error('Failed to fetch user:', errorDetails);
+          }
+          // Clear invalid token silently (user will need to login again)
+          api.removeToken();
+          setUser(null);
+          setIsLoading(false);
+        });
     } else {
       setIsLoading(false);
     }

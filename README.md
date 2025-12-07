@@ -102,12 +102,28 @@ accumulation/
 
 All project documentation is in the root directory:
 
+### Core Planning
 - **[status.md](./status.md)** - Daily progress tracker (START HERE)
 - **[RoadMap.md](./RoadMap.md)** - Project overview and goals
 - **[sprints_plan.md](./sprints_plan.md)** - Development roadmap
+
+### Architecture & Design
 - **[system_architecture.md](./system_architecture.md)** - System architecture
 - **[database_schema.md](./database_schema.md)** - Database schema
 - **[api_endpoints.md](./api_endpoints.md)** - API documentation
+- **[detection_engine.md](./detection_engine.md)** - Detection rules and scoring
+
+### User Guides
+- **[USER_ONBOARDING.md](./USER_ONBOARDING.md)** - User onboarding guide
+- **[BETA_TESTING_GUIDE.md](./BETA_TESTING_GUIDE.md)** - Beta testing guide
+- **[THRESHOLD_TUNING_GUIDE.md](./THRESHOLD_TUNING_GUIDE.md)** - Threshold tuning guide
+
+### Technical Guides
+- **[environment_variables.md](./environment_variables.md)** - Environment variables
+- **[deployment.md](./deployment.md)** - Deployment instructions
+- **[testing_strategy.md](./testing_strategy.md)** - Testing approach
+- **[error_handling.md](./error_handling.md)** - Error handling
+- **[security.md](./security.md)** - Security practices
 
 See [status.md](./status.md) for complete documentation index.
 
@@ -148,6 +164,28 @@ This is a private project. For questions or issues, contact the project maintain
 
 ---
 
-**Status:** 🟡 In Development - Sprint 0  
-**Last Updated:** 2025-01-15
+## 🎯 Current Status
+
+**Sprint 8:** ✅ Complete - Beta Release preparation  
+**Sprint 9:** 🟡 In Progress - Production Launch
+
+### Completed Features
+- ✅ Authentication & User Management
+- ✅ Subscription System (Free, Basic, Pro, Premium)
+- ✅ Signal Detection Engine (9+ detection rules)
+- ✅ Multi-chain Support (Ethereum, Polygon, Arbitrum, Base, BSC, Avalanche, Fantom)
+- ✅ Watchlist & Alerts
+- ✅ Admin Panel (User management, payment approval, system settings)
+- ✅ Token-Specific Tuning
+- ✅ False Positive Monitoring & Analytics
+- ✅ Threshold Tuning Infrastructure
+- ✅ Feedback Collection System
+- ✅ Landing Page & Pricing Page
+
+### In Progress
+- 🟡 Onboarding Wizard
+- 🟡 Documentation Improvements
+- 🟡 Performance Optimization
+
+**Last Updated:** 2025-12-07
 

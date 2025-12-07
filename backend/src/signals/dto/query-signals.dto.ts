@@ -12,6 +12,10 @@ export class QuerySignalsDto {
   coinId?: string;
 
   @IsOptional()
+  @IsString()
+  symbol?: string;
+
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(0)

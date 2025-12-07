@@ -1,8 +1,11 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '../common/prisma/prisma.module';
+import { CacheModule } from '../common/cache/cache.module';
+import { CompressionModule } from '../common/compression/compression.module';
 import { AuthModule } from '../auth/auth.module';
 import { SubscriptionModule } from '../subscription/subscription.module';
 import { AlertsModule } from '../alerts/alerts.module';
+import { AdminModule } from '../admin/admin.module';
 import { RuleEngineService } from './services/rule-engine.service';
 import { ScoringService } from './services/scoring.service';
 import { SignalService } from './services/signal.service';
@@ -16,7 +19,15 @@ import { DetectionProcessor } from './detection.processor';
 import { SignalsController } from './signals.controller';
 
 @Module({
-  imports: [PrismaModule, AuthModule, SubscriptionModule, AlertsModule],
+  imports: [
+    PrismaModule,
+    CacheModule,
+    CompressionModule,
+    AuthModule,
+    SubscriptionModule,
+    AlertsModule,
+    AdminModule,
+  ],
   controllers: [SignalsController],
   providers: [
     RuleEngineService,
