@@ -62,7 +62,14 @@ export default function AdminPage() {
     supplyPctSpecial?: string;
     liquidityRatioSpecial?: string;
   }>({});
-  const [availableChains, setAvailableChains] = useState<{ chain: string; coinCount: number }[]>([]);
+  const [availableChains, setAvailableChains] = useState<{ 
+    chain: string; 
+    coinCount: number;
+    activeCount: number;
+    famousCount: number;
+    name?: string;
+    isActive?: boolean;
+  }[]>([]);
   const [isLoadingNewTokenCoins, setIsLoadingNewTokenCoins] = useState(false);
   const [falsePositiveAnalytics, setFalsePositiveAnalytics] = useState<FalsePositiveAnalytics | null>(null);
   const [falsePositiveAnalyticsLoading, setFalsePositiveAnalyticsLoading] = useState(false);
