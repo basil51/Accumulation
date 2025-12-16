@@ -1,0 +1,130 @@
+while waiting from long days to see signals , I test and debug at line 162 , and the debug line 162 give me this requestParams :
+{
+  "category": ["erc20"],
+  "withMetadata": true,
+  "fromBlock": "0x16df864",
+  "toBlock": "0x16e6c24",
+  "contractAddresses": ["0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce"]
+}
+
+❌ HARD BLOCKER #1 (critical)
+🚫 You are NOT specifying toAddress or fromAddress
+
+This means:
+
+“Give me ALL ERC20 transfers of SHIB in this block range”
+
+Result:
+
+TENS OF THOUSANDS of transfers
+
+Alchemy silently truncates or returns empty when:
+
+result set > internal limit
+
+maxCount not specified
+
+pagination (pageKey) not handled
+
+👉 This alone can return empty array even when data exists.
+
+❌ HARD BLOCKER #2 (this kills accumulation logic)
+🚫 excludeZeroValue: false
+
+ERC20 transfers emit logs even when value = 0:
+
+approvals
+
+internal token mechanics
+
+rebasing tokens
+
+dust events
+
+You already observed this bug yourself:
+
+“I got many signals with value 0 dollars”
+
+So your engine:
+
+either filtered them later
+
+or your USD-value threshold rejected everything
+
+This explains:
+
+signals at $0
+
+then no signals at all after you “fixed” thresholds
+
+⚠️ DESIGN FLAW #1 (why accumulation is never detected)
+❌ You are NOT grouping by WALLET
+
+Accumulation ≠ single transfer
+Accumulation = same wallet repeatedly receiving
+
+Your current query:
+
+does not target wallets
+
+does not detect net inflow
+
+does not aggregate
+
+So even valid data → no accumulation signal
+
+⚠️ DESIGN FLAW #2 (block window is too small)
+
+Your window:
+
+fromBlock → toBlock ≈ ~50,000 blocks
+≈ 7 days
+
+
+Whales accumulate:
+
+slowly
+
+across days/weeks
+
+using multiple txs
+
+Your logic likely:
+
+if (usdValue > X) signal
+
+
+That will never fire.
+
+✅ CORRECT TEST COMMAND (YOU MUST TRY THIS)
+
+Use known whale address + SHIB:
+
+curl -X POST https://eth-mainnet.g.alchemy.com/v2/YOUR_API_KEY \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "alchemy_getAssetTransfers",
+    "params": [
+      {
+        "fromBlock": "0x16df000",
+        "toBlock": "latest",
+        "category": ["erc20"],
+        "contractAddresses": ["0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce"],
+        "toAddress": "0x28c6c06298d514db089934071355e5743bf21d60",
+        "excludeZeroValue": true,
+        "withMetadata": true,
+        "maxCount": "0x64"
+      }
+    ],
+    "id": 1
+  }'
+
+
+👉 If this returns transfers (it will), then:
+
+Alchemy works
+
+Your infra works
+
+The bug is logic-level

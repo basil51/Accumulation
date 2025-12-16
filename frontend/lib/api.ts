@@ -36,17 +36,46 @@ export interface ApiError {
 
 export class ApiClient {
   private baseUrl: string;
+  private refreshPromise: Promise<void> | null = null;
 
   constructor(baseUrl: string = API_BASE_URL) {
     this.baseUrl = baseUrl;
   }
 
+  private decodeTokenExpiry(token: string): number | null {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.exp ? Number(payload.exp) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private isTokenExpired(token: string, skewSeconds: number = 30): boolean {
+    const exp = this.decodeTokenExpiry(token);
+    if (!exp) return false;
+    const now = Math.floor(Date.now() / 1000);
+    return exp - skewSeconds <= now;
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {},
+    canRetry: boolean = true,
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
-    const token = this.getToken();
+    let token = this.getToken();
+
+    // Proactively refresh if the access token is expired or close to expiring
+    if (token && this.isTokenExpired(token)) {
+      try {
+        await this.refreshAccessToken();
+        token = this.getToken();
+      } catch {
+        this.removeToken();
+        token = null;
+      }
+    }
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -76,12 +105,16 @@ export class ApiClient {
         const errorMessage = errorData.message || errorData.error || response.statusText;
         const error = new Error(errorMessage);
         (error as any).response = { data: errorData, status: response.status };
-        
-        // For 401/403, clear token as it's likely invalid
-        if (response.status === 401 || response.status === 403) {
-          this.removeToken();
+        // Attempt token refresh once on unauthorized, then retry original request
+        if ((response.status === 401 || response.status === 403) && canRetry) {
+          try {
+            await this.refreshAccessToken();
+            return this.request<T>(endpoint, options, false);
+          } catch {
+            this.removeToken();
+          }
         }
-        
+
         throw error;
       }
 
@@ -116,6 +149,47 @@ export class ApiClient {
     if (typeof window === 'undefined') return;
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
+  }
+
+  private async refreshAccessToken(): Promise<void> {
+    if (typeof window === 'undefined') {
+      throw new Error('Refresh not available server-side');
+    }
+
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (!refreshToken) {
+      throw new Error('No refresh token available');
+    }
+
+    if (this.refreshPromise) {
+      return this.refreshPromise;
+    }
+
+    this.refreshPromise = fetch(`${this.baseUrl}/auth/refresh`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ refreshToken }),
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          const errorMessage = errorData.message || 'Failed to refresh token';
+          throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+        this.setToken(data.accessToken);
+        if (data.refreshToken) {
+          localStorage.setItem('refreshToken', data.refreshToken);
+        }
+      })
+      .finally(() => {
+        this.refreshPromise = null;
+      });
+
+    return this.refreshPromise;
   }
 
   // Auth endpoints
@@ -168,25 +242,11 @@ export class ApiClient {
   }
 
   async refreshToken() {
-    const refreshToken = localStorage.getItem('refreshToken');
-    if (!refreshToken) {
-      throw new Error('No refresh token available');
-    }
-
-    const response = await this.request<{
-      accessToken: string;
-      refreshToken: string;
-    }>('/auth/refresh', {
-      method: 'POST',
-      body: JSON.stringify({ refreshToken }),
-    });
-
-    this.setToken(response.accessToken);
-    if (response.refreshToken) {
-      localStorage.setItem('refreshToken', response.refreshToken);
-    }
-
-    return response;
+    await this.refreshAccessToken();
+    return {
+      accessToken: this.getToken() as string,
+      refreshToken: localStorage.getItem('refreshToken') as string,
+    };
   }
 
   async getCurrentUser() {
@@ -620,6 +680,24 @@ export class ApiClient {
 
   async updateCoinStatus(coinId: string, data: { isActive?: boolean; isFamous?: boolean }) {
     return this.put<Coin>(`/admin/coins/${coinId}/status`, data);
+  }
+
+  async updateCoin(
+    coinId: string,
+    data: {
+      name?: string;
+      symbol?: string;
+      contractAddress?: string | null;
+      chain?: string;
+      totalSupply?: number | null;
+      circulatingSupply?: number | null;
+      priceUsd?: number | null;
+      liquidityUsd?: number | null;
+      isActive?: boolean;
+      isFamous?: boolean;
+    },
+  ) {
+    return this.put<Coin>(`/admin/coins/${coinId}`, data);
   }
 
   async importCoinsFromCoinGecko(params?: { 

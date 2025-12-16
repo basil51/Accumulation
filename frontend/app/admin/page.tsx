@@ -86,7 +86,28 @@ export default function AdminPage() {
     search?: string;
   }>({});
   const [showAddCoinModal, setShowAddCoinModal] = useState(false);
+  const [showEditCoinModal, setShowEditCoinModal] = useState(false);
+  const [editingCoinId, setEditingCoinId] = useState<string | null>(null);
   const [newCoinForm, setNewCoinForm] = useState<{
+    name: string;
+    symbol: string;
+    contractAddress: string;
+    chain: string;
+    totalSupply?: string;
+    circulatingSupply?: string;
+    priceUsd?: string;
+    liquidityUsd?: string;
+    isActive: boolean;
+    isFamous: boolean;
+  }>({
+    name: '',
+    symbol: '',
+    contractAddress: '',
+    chain: '',
+    isActive: false,
+    isFamous: false,
+  });
+  const [editCoinForm, setEditCoinForm] = useState<{
     name: string;
     symbol: string;
     contractAddress: string;
@@ -283,6 +304,61 @@ export default function AdminPage() {
       loadCoins();
     } catch (err: any) {
       setError(err.message || 'Failed to delete coin');
+    }
+  };
+
+  const handleEditCoin = (coin: Coin) => {
+    setEditingCoinId(coin.id);
+    setEditCoinForm({
+      name: coin.name || '',
+      symbol: coin.symbol || '',
+      contractAddress: coin.contractAddress || '',
+      chain: coin.chain || '',
+      totalSupply: coin.totalSupply?.toString() || '',
+      circulatingSupply: coin.circulatingSupply?.toString() || '',
+      priceUsd: coin.priceUsd?.toString() || '',
+      liquidityUsd: coin.liquidityUsd?.toString() || '',
+      isActive: coin.isActive || false,
+      isFamous: coin.isFamous || false,
+    });
+    setShowEditCoinModal(true);
+  };
+
+  const handleUpdateCoin = async () => {
+    if (!editingCoinId || !editCoinForm.name || !editCoinForm.symbol || !editCoinForm.chain) {
+      setError('Please fill in all required fields (Name, Symbol, and Chain)');
+      return;
+    }
+
+    try {
+      const payload: any = {
+        name: editCoinForm.name,
+        symbol: editCoinForm.symbol,
+        contractAddress: editCoinForm.contractAddress?.trim() || null,
+        chain: editCoinForm.chain,
+        isActive: editCoinForm.isActive,
+        isFamous: editCoinForm.isFamous,
+      };
+
+      if (editCoinForm.totalSupply) payload.totalSupply = Number(editCoinForm.totalSupply);
+      if (editCoinForm.circulatingSupply) payload.circulatingSupply = Number(editCoinForm.circulatingSupply);
+      if (editCoinForm.priceUsd) payload.priceUsd = Number(editCoinForm.priceUsd);
+      if (editCoinForm.liquidityUsd) payload.liquidityUsd = Number(editCoinForm.liquidityUsd);
+
+      await api.updateCoin(editingCoinId, payload);
+      setShowEditCoinModal(false);
+      setEditingCoinId(null);
+      setEditCoinForm({
+        name: '',
+        symbol: '',
+        contractAddress: '',
+        chain: '',
+        isActive: false,
+        isFamous: false,
+      });
+      loadCoins();
+    } catch (err: any) {
+      setError(err.message || 'Failed to update coin');
     }
   };
 
@@ -525,7 +601,7 @@ export default function AdminPage() {
 
   // Load available chains when modal opens
   useEffect(() => {
-    if ((showAddTokenSettingsModal || showAddCoinModal) && availableChains.length === 0) {
+    if ((showAddTokenSettingsModal || showAddCoinModal || showEditCoinModal) && availableChains.length === 0) {
       const loadChains = async () => {
         try {
           const response = await api.getAvailableChains();
@@ -536,7 +612,7 @@ export default function AdminPage() {
       };
       loadChains();
     }
-  }, [showAddTokenSettingsModal, showAddCoinModal, availableChains.length]);
+  }, [showAddTokenSettingsModal, showAddCoinModal, showEditCoinModal, availableChains.length]);
 
   // Load coins when chain is selected
   useEffect(() => {
@@ -2714,12 +2790,20 @@ export default function AdminPage() {
                           {(coin as any).watchlistCount || 0}
                         </td>
                         <td className="px-4 py-3 text-right">
-                          <button
-                            onClick={() => handleDeleteCoin(coin.id)}
-                            className="text-xs font-medium text-red-600 dark:text-red-400 hover:underline"
-                          >
-                            Delete
-                          </button>
+                          <div className="flex gap-3 justify-end">
+                            <button
+                              onClick={() => handleEditCoin(coin)}
+                              className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteCoin(coin.id)}
+                              className="text-xs font-medium text-red-600 dark:text-red-400 hover:underline"
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -2863,6 +2947,149 @@ export default function AdminPage() {
                         className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
                       >
                         Create Coin
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Edit Coin Modal */}
+            {showEditCoinModal && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="bg-white dark:bg-zinc-900 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
+                  <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50 mb-4">
+                    Edit Coin
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                        Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={editCoinForm.name}
+                        onChange={(e) => setEditCoinForm({ ...editCoinForm, name: e.target.value })}
+                        className="w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                        Symbol *
+                      </label>
+                      <input
+                        type="text"
+                        value={editCoinForm.symbol}
+                        onChange={(e) => setEditCoinForm({ ...editCoinForm, symbol: e.target.value.toUpperCase() })}
+                        className="w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                        Contract Address <span className="text-zinc-500 text-xs">(optional for native coins)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={editCoinForm.contractAddress}
+                        onChange={(e) => setEditCoinForm({ ...editCoinForm, contractAddress: e.target.value })}
+                        placeholder="Leave empty for native coins (e.g., BTC, ETH native)"
+                        className="w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm"
+                      />
+                      <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                        Required for tokens, optional for native blockchain coins
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                        Chain *
+                      </label>
+                      <select
+                        value={editCoinForm.chain}
+                        onChange={(e) => setEditCoinForm({ ...editCoinForm, chain: e.target.value })}
+                        className="w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm"
+                        required
+                      >
+                        <option value="">Select chain...</option>
+                        {availableChains.length === 0 ? (
+                          <option value="" disabled>Loading chains...</option>
+                        ) : (
+                          availableChains.map((c) => (
+                            <option key={c.chain} value={c.chain}>
+                              {c.name || c.chain} {c.coinCount > 0 ? `(${c.coinCount} coins)` : ''}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                          Total Supply
+                        </label>
+                        <input
+                          type="number"
+                          value={editCoinForm.totalSupply || ''}
+                          onChange={(e) => setEditCoinForm({ ...editCoinForm, totalSupply: e.target.value })}
+                          className="w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                          Circulating Supply
+                        </label>
+                        <input
+                          type="number"
+                          value={editCoinForm.circulatingSupply || ''}
+                          onChange={(e) => setEditCoinForm({ ...editCoinForm, circulatingSupply: e.target.value })}
+                          className="w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-4">
+                      <label className="inline-flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={editCoinForm.isActive}
+                          onChange={(e) => setEditCoinForm({ ...editCoinForm, isActive: e.target.checked })}
+                          className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-700"
+                        />
+                        <span className="text-sm text-zinc-700 dark:text-zinc-300">Active</span>
+                      </label>
+                      <label className="inline-flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={editCoinForm.isFamous}
+                          onChange={(e) => setEditCoinForm({ ...editCoinForm, isFamous: e.target.checked })}
+                          className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-700"
+                        />
+                        <span className="text-sm text-zinc-700 dark:text-zinc-300">Famous</span>
+                      </label>
+                    </div>
+                    <div className="flex gap-3 justify-end">
+                      <button
+                        onClick={() => {
+                          setShowEditCoinModal(false);
+                          setEditingCoinId(null);
+                          setEditCoinForm({
+                            name: '',
+                            symbol: '',
+                            contractAddress: '',
+                            chain: '',
+                            isActive: false,
+                            isFamous: false,
+                          });
+                        }}
+                        className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-700 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleUpdateCoin}
+                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                      >
+                        Update Coin
                       </button>
                     </div>
                   </div>

@@ -1,0 +1,178 @@
+What is NOW correct (good progress)
+
+Your current request:
+
+{
+  "category": ["erc20"],
+  "withMetadata": true,
+  "excludeZeroValue": true,
+  "fromBlock": "0x16df8a9",
+  "toBlock": "0x16e6c6f",
+  "contractAddresses": ["0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce"],
+  "maxCount": "0x64",
+  "pageKey": "25cffa39-9a0d-4f4c-a4a8-6826cc32b393"
+}
+
+
+✔ excludeZeroValue: true → fixed zero-USD noise
+✔ maxCount present → avoids silent truncation
+✔ pageKey present → pagination implemented (very good)
+✔ Contract address correct (SHIB)
+✔ Block range reasonable
+
+Alchemy will respond correctly to this request.
+
+So yes: Cursor fixed the API-level bugs.
+
+❌ CRITICAL PROBLEM (this still blocks signals)
+🚫 You are paginating BEFORE wallet targeting
+
+Right now your query still means:
+
+“Give me any SHIB ERC20 transfers in this block range”
+
+Even with pagination:
+
+you’re scanning random global SHIB traffic
+
+most transfers are:
+
+DEX trades
+
+internal routing
+
+dust
+
+almost none represent accumulation
+
+So your engine:
+
+sees many unrelated wallets
+
+no wallet crosses accumulation thresholds
+
+→ zero signals
+
+This is expected behavior.
+
+❌ LOGIC ERROR (very important)
+🚫 pageKey must NOT be reused across different block windows
+
+Your log shows:
+
+"fromBlock": "0x16df8a9",
+"toBlock": "0x16e6c6f",
+"pageKey": "25cffa39-9a0d-4f4c-a4a8-6826cc32b393"
+
+
+⚠️ pageKey is ONLY valid for the exact previous response
+If:
+
+block range changes
+
+params change
+
+or a new scan cycle starts
+
+➡️ pageKey MUST be reset to undefined
+
+Otherwise:
+
+Alchemy returns empty pages
+
+silently
+
+no error
+
+This alone can explain:
+
+“I still don’t get any signals”
+
+🔥 THE REAL FIX (non-optional)
+You MUST switch to a 2-stage architecture
+
+Your current approach = ❌ bottom-up
+Correct approach = ✅ top-down
+
+✅ Stage 1 — Wallet Discovery (MANDATORY)
+
+Goal: find wallets worth tracking
+
+Correct query
+{
+  "category": ["erc20"],
+  "contractAddresses": ["0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce"],
+  "fromBlock": "latest-50000",
+  "excludeZeroValue": true,
+  "maxCount": "0x3e8"
+}
+
+
+Then:
+
+group by to
+
+sum value
+
+count txs
+
+keep top N wallets
+
+⚠️ No USD filtering here
+
+✅ Stage 2 — Accumulation Detection (PER WALLET)
+
+Only now you do:
+
+{
+  "category": ["erc20"],
+  "contractAddresses": ["SHIB"],
+  "toAddress": "0xWALLET",
+  "fromBlock": "latest-200000",
+  "excludeZeroValue": true
+}
+
+
+Then compute:
+
+net = received - sent
+duration = lastTx - firstTx
+txCount
+
+✅ Correct accumulation trigger (example)
+if (
+  netUsd >= 50_000 &&
+  txCount >= 3 &&
+  duration >= 24h
+) {
+  EMIT_SIGNAL
+}
+
+🚨 Summary verdict
+Item	Status
+Alchemy URL	✅ Correct
+API params	✅ Valid
+Pagination	⚠️ Misused
+Zero-value noise	✅ Fixed
+Wallet targeting	❌ Missing
+Accumulation logic	❌ Not implemented
+✅ What to do NEXT (important)
+
+Please answer one of these (your choice):
+
+1️⃣ Paste the accumulation detection code (or pseudo-code)
+2️⃣ Tell me:
+
+do you store transfers in DB?
+
+or process them streaming?
+
+I will then:
+
+redesign the logic
+
+fix pagination safely
+
+and guarantee real accumulation signals start appearing
+
+You’re no longer debugging Alchemy — you’re debugging strategy.

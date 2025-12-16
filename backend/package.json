@@ -22,7 +22,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "prisma:seed": "ts-node prisma/seed.ts",
-    "dev": "PORT=4007 nest start --watch"
+    "dev": "PORT=${PORT:-4007} REDIS_HOST=${REDIS_HOST:-127.0.0.1} REDIS_PORT=${REDIS_PORT:-6381} nest start --watch"
   },
   "dependencies": {
     "@nestjs/bullmq": "^11.0.4",
@@ -33,9 +33,11 @@
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^10.3.0",
+    "@nestjs/schedule": "^6.0.1",
     "@nestjs/throttler": "^6.5.0",
     "@prisma/client": "^5.7.1",
     "argon2": "^0.44.0",
+    "axios": "^1.13.2",
     "bullmq": "^5.65.1",
     "cache-manager": "^7.2.5",
     "cache-manager-redis-yet": "^5.1.5",

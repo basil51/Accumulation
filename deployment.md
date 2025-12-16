@@ -125,9 +125,9 @@ pnpm run start:worker
 ```
 
 **Access:**
-* Frontend: http://localhost:3001
-* Backend API: http://localhost:3000
-* API Docs: http://localhost:3000/api/docs
+* Frontend: http://localhost:4007
+* Backend API: http://localhost:4007
+* API Docs: http://localhost:4007/api/docs
 
 ---
 
@@ -260,7 +260,7 @@ primary_region = "iad"
 
 [[services]]
   http_checks = []
-  internal_port = 3000
+  internal_port = 3007
   processes = ["app"]
   protocol = "tcp"
   script_checks = []
@@ -312,7 +312,7 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
 
-EXPOSE 3000
+EXPOSE 3007
 
 CMD ["node", "dist/main.js"]
 ```

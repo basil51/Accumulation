@@ -20,9 +20,20 @@ export class EventsService {
 
     const safeLimit = Math.min(Math.max(limit || 1, 1), 100);
 
+    // Some native coins may not have a contractAddress; in that case return empty
+    if (!coin.contractAddress) {
+      return [];
+    }
+
+    // Guard against null/undefined contract addresses to avoid Prisma validation errors
+    const tokenContract = coin.contractAddress;
+    if (!tokenContract) {
+      return [];
+    }
+
     const events = await this.prisma.normalizedEvent.findMany({
       where: {
-        tokenContract: coin.contractAddress,
+        tokenContract,
         chain: coin.chain,
       },
       orderBy: {

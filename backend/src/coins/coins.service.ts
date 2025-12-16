@@ -413,6 +413,103 @@ export class CoinsService {
   }
 
   /**
+   * Update a coin
+   */
+  async updateCoin(
+    coinId: string,
+    data: {
+      name?: string;
+      symbol?: string;
+      contractAddress?: string | null;
+      chain?: Chain;
+      totalSupply?: number | null;
+      circulatingSupply?: number | null;
+      priceUsd?: number | null;
+      liquidityUsd?: number | null;
+      isActive?: boolean;
+      isFamous?: boolean;
+    },
+  ) {
+    const coin = await this.prisma.coin.findUnique({
+      where: { id: coinId },
+    });
+
+    if (!coin) {
+      throw new NotFoundException('Coin not found');
+    }
+
+    const symbolUpper = data.symbol ? data.symbol.toUpperCase() : coin.symbol;
+    const contractAddress = data.contractAddress !== undefined 
+      ? (data.contractAddress?.trim() || null)
+      : coin.contractAddress;
+    const chain = data.chain || coin.chain;
+
+    // Check for uniqueness conflicts if contractAddress or symbol/chain is being changed
+    if (data.contractAddress !== undefined || data.chain !== undefined || data.symbol !== undefined) {
+      // For coins with contract address, check by contractAddress+chain
+      if (contractAddress) {
+        const existingByAddress = await this.prisma.coin.findUnique({
+          where: {
+            contractAddress_chain: {
+              contractAddress: contractAddress.toLowerCase(),
+              chain: chain,
+            },
+          },
+        });
+
+        if (existingByAddress && existingByAddress.id !== coinId) {
+          throw new BadRequestException(
+            `Coin with contract address ${contractAddress} on ${chain} already exists`,
+          );
+        }
+      }
+
+      // For native coins (without contract address), check by symbol+chain
+      if (!contractAddress) {
+        const existingNative = await this.prisma.coin.findFirst({
+          where: {
+            symbol: symbolUpper,
+            chain: chain,
+            contractAddress: null,
+            id: { not: coinId },
+          },
+        });
+
+        if (existingNative) {
+          throw new BadRequestException(
+            `Native coin ${symbolUpper} on ${chain} already exists`,
+          );
+        }
+      }
+    }
+
+    const updateData: any = {};
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.symbol !== undefined) updateData.symbol = symbolUpper;
+    if (data.contractAddress !== undefined) updateData.contractAddress = contractAddress;
+    if (data.chain !== undefined) updateData.chain = data.chain;
+    if (data.totalSupply !== undefined) updateData.totalSupply = data.totalSupply;
+    if (data.circulatingSupply !== undefined) updateData.circulatingSupply = data.circulatingSupply;
+    if (data.priceUsd !== undefined) updateData.priceUsd = data.priceUsd;
+    if (data.liquidityUsd !== undefined) updateData.liquidityUsd = data.liquidityUsd;
+    if (data.isActive !== undefined) updateData.isActive = data.isActive;
+    if (data.isFamous !== undefined) updateData.isFamous = data.isFamous;
+
+    const updatedCoin = await this.prisma.coin.update({
+      where: { id: coinId },
+      data: updateData,
+    });
+
+    // Update chain coin count if chain changed
+    if (data.chain && data.chain !== coin.chain) {
+      await this.updateChainCoinCount(coin.chain);
+      await this.updateChainCoinCount(data.chain);
+    }
+
+    return updatedCoin;
+  }
+
+  /**
    * Delete a coin (only if no signals or watchlist items exist)
    */
   async deleteCoin(coinId: string) {

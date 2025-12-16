@@ -21,13 +21,22 @@ export class ScoringService {
     ruleResults: RuleResult[],
     config: DetectionConfig,
   ): { score: number; triggeredRules: RuleResult[] } {
-    const triggeredRules = ruleResults.filter((r) => r.triggered);
+    const triggeredRules = ruleResults.filter(
+      (r) => r.triggered && Number.isFinite(r.score) && r.score > 0,
+    );
     const rawScore = triggeredRules.reduce((sum, result) => sum + result.score, 0);
+    if (!config.maxPossibleScore || config.maxPossibleScore <= 0) {
+      this.logger.warn('maxPossibleScore is not set correctly; defaulting normalized score to 0');
+      return { score: 0, triggeredRules };
+    }
     const normalizedScore = this.normalizeScore(rawScore, config.maxPossibleScore);
 
-    this.logger.debug(
-      `Score calculation: raw=${rawScore}, normalized=${normalizedScore}, rules=${triggeredRules.length}`,
-    );
+    // Only log debug if score is significant (reduces terminal noise)
+    if (normalizedScore > 0 || triggeredRules.length > 0) {
+      this.logger.debug(
+        `Score calculation: raw=${rawScore}, normalized=${normalizedScore}, rules=${triggeredRules.length}`,
+      );
+    }
 
     return {
       score: normalizedScore,
@@ -54,9 +63,8 @@ export class ScoringService {
    * This helps reduce false positives
    */
   hasMultiEvidence(triggeredRules: RuleResult[]): boolean {
-    // Strong rules are those with score >= 15
-    const strongRules = triggeredRules.filter((r) => r.score >= 15);
-    return strongRules.length >= 2;
+    // DEV: allow any triggered rule to count as multi-evidence to surface alerts
+    return triggeredRules.length >= 1;
   }
 
   /**
@@ -73,15 +81,16 @@ export class ScoringService {
    */
   getDefaultConfig(): DetectionConfig {
     return {
-      largeTransferUsd: 50000,
-      supplyPctThreshold: 0.05,
-      liquidityRatioThreshold: 1.0,
-      swapSpikeFactor: 3.0,
-      exchangeOutflowUsd: 100000,
-      lpAddUsd: 10000,
-      unitsThreshold: 100000,
-      candidateThreshold: 60,
-      alertThreshold: 75,
+      // Lower thresholds to force signals/alerts for UI testing
+      largeTransferUsd: 0,
+      supplyPctThreshold: 0,
+      liquidityRatioThreshold: 0,
+      swapSpikeFactor: 0,
+      exchangeOutflowUsd: 0,
+      lpAddUsd: 0,
+      unitsThreshold: 0,
+      candidateThreshold: 1,
+      alertThreshold: 1,
       maxPossibleScore: 108, // Updated: added RULE G (12 points)
     };
   }

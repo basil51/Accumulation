@@ -17,8 +17,7 @@ export class DetectionProcessor extends WorkerHost {
   }
 
   async process(job: Job<any, any, string>): Promise<any> {
-    this.logger.log(`Processing detection job ${job.id} of type ${job.name}`);
-
+    // Reduced logging - only log errors and summary, not every job
     try {
       switch (job.name) {
         case 'process-event':

@@ -23,6 +23,9 @@ import { SignalsModule } from './signals/signals.module';
 import { AlertsModule } from './alerts/alerts.module';
 import { AdminModule } from './admin/admin.module';
 import { FeedbackModule } from './feedback/feedback.module';
+import { CoinGeckoModule } from './integrations/coingecko/coingecko.module';
+import { AlchemyModule } from './integrations/alchemy/alchemy.module';
+import { SchedulerModule } from './integrations/scheduler/scheduler.module';
 
 @Module({
   imports: [
@@ -43,12 +46,25 @@ import { FeedbackModule } from './feedback/feedback.module';
     }),
     BullModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        connection: {
-          host: configService.get('REDIS_HOST'),
-          port: configService.get('REDIS_PORT'),
-        },
-      }),
+      useFactory: async (configService: ConfigService) => {
+        const redisHost =
+          (configService.get<string>('REDIS_HOST') || 'localhost').toString();
+        const redisPortRaw = configService.get<string | number>('REDIS_PORT') ?? 6381;
+        const redisPort = Number.parseInt(redisPortRaw.toString(), 10) || 6381;
+
+        const connection: any = {
+          host: redisHost,
+          port: redisPort,
+        };
+        
+        // Add password if provided
+        const redisPassword = configService.get('REDIS_PASSWORD');
+        if (redisPassword) {
+          connection.password = redisPassword;
+        }
+        
+        return { connection };
+      },
       inject: [ConfigService],
     }),
     PrismaModule,
@@ -69,6 +85,9 @@ import { FeedbackModule } from './feedback/feedback.module';
     AlertsModule,
     AdminModule,
     FeedbackModule,
+    CoinGeckoModule,
+    AlchemyModule,
+    SchedulerModule,
   ],
   controllers: [AppController],
   providers: [

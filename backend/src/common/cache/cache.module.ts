@@ -10,16 +10,24 @@ import { CacheService } from './cache.service';
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {
         const redisHost = configService.get('REDIS_HOST') || 'localhost';
-        const redisPort = configService.get('REDIS_PORT') || 6381;
+        const redisPort = configService.get('REDIS_PORT') || 6379;
+        const redisPassword = configService.get('REDIS_PASSWORD');
+        
+        const redisConfig: any = {
+          socket: {
+            host: redisHost,
+            port: parseInt(redisPort.toString(), 10),
+          },
+          ttl: 300, // Default TTL: 5 minutes
+        };
+        
+        // Add password if provided
+        if (redisPassword) {
+          redisConfig.password = redisPassword;
+        }
         
         return {
-          store: await redisStore({
-            socket: {
-              host: redisHost,
-              port: parseInt(redisPort.toString(), 10),
-            },
-            ttl: 300, // Default TTL: 5 minutes
-          }),
+          store: await redisStore(redisConfig),
         };
       },
       inject: [ConfigService],

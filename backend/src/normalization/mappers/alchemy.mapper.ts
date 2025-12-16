@@ -14,7 +14,11 @@ export class AlchemyMapper implements IEventMapper {
     }
 
     const chain = this.mapChain(event.network);
-    const eventId = `${transaction.hash}-${event.logIndex || 0}`;
+    const eventId = event.uniqueId || `${transaction.hash}-${event.logIndex || 0}`;
+
+    const decimals = event.decimals ?? 18;
+    const rawAmount = Number(event.value || 0);
+    const amount = rawAmount / Math.pow(10, decimals); // normalize to token units
 
     return {
       eventId,
@@ -26,11 +30,11 @@ export class AlchemyMapper implements IEventMapper {
       blockNumber: Number(event.blockNumber),
       tokenContract: event.contractAddress || transaction.to, // Depending on if it's a token transfer or ETH
       tokenSymbol: event.asset || 'ETH', // Simplified
-      tokenDecimals: event.decimals || 18,
+      tokenDecimals: decimals,
       fromAddress: transaction.from,
       toAddress: transaction.to,
-      amount: Number(event.value || 0),
-      amountUsd: 0, // Not provided by webhook directly usually
+      amount,
+      // amountUsd will be enriched upstream (ingestion scheduler) using DB price
       metadata: {
           activityType: event.activityType,
       },

@@ -9,7 +9,7 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "pnpm --parallel --filter frontend --filter backend run dev",
+    "dev": "pnpm docker:up && pnpm --parallel --filter frontend --filter backend run dev",
     "dev:frontend": "pnpm --filter frontend dev",
     "dev:backend": "pnpm --filter backend dev",
     "build": "pnpm --filter frontend build && pnpm --filter backend build",
@@ -18,8 +18,8 @@
     "db:migrate": "pnpm --filter backend prisma migrate dev",
     "db:seed": "pnpm --filter backend prisma:seed",
     "db:studio": "pnpm --filter backend prisma studio",
-    "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down"
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down"
   },
   "devDependencies": {
     "typescript": "^5.3.3"

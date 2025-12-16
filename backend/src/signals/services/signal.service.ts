@@ -38,6 +38,14 @@ export class SignalService {
    */
   async createAccumulationSignal(input: CreateAccumulationSignalInput) {
     try {
+      // Guard against zero/negative or invalid USD amounts
+      // TEMPORARY: Lowered to $0.10 for testing - change back to $1 after verifying signals work
+      const minUsd = 0.10; // drop dust/zero signals (was 1, lowered for testing)
+      if (!Number.isFinite(input.amountUsd) || input.amountUsd < minUsd) {
+        this.logger.debug(`Skipping AccumulationSignal creation: amountUsd=$${input.amountUsd} < minUsd=$${minUsd}`);
+        return null;
+      }
+
       const signal = await this.prisma.accumulationSignal.create({
         data: {
           coinId: input.coinId,
@@ -146,6 +154,10 @@ export class SignalService {
     const { coinId, symbol, minScore, startDate, endDate, page = 1, limit = 50 } = query;
 
     const where: Prisma.AccumulationSignalWhereInput = {};
+
+    // Exclude dust/zero USD signals
+    // TEMPORARY: Lowered to $0.10 for testing - change back to $1 after verifying signals work
+    where.amountUsd = { gte: 0.10 };
 
     // If symbol is provided, find coins by symbol (partial match) and filter by their IDs
     if (symbol && !coinId) {

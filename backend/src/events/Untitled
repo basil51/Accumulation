@@ -1,0 +1,23 @@
+I need you to act as a senior backend debugger.
+
+My system produces either:
+- many signals with amountUSD = 0
+- or zero signals when thresholds are restored
+
+Your task:
+1. Trace the entire detection flow:
+   ingestion → normalization → scoring → signal creation
+2. Identify all code paths where amountUSD could become 0 or undefined
+3. Add a Signal Debug Inspector:
+   - logs rule-by-rule evaluation
+   - outputs why a transaction did or did not trigger a signal
+4. Add guardrails:
+   - forbid USD-based rules if price or liquidity missing
+   - prevent zero-value scoring
+5. Propose fixes without breaking current architecture
+
+Start by scanning:
+- normalization logic
+- detection_engine rules
+- scoring normalization
+- threshold comparisons

@@ -370,6 +370,54 @@ export class AdminController {
   }
 
   /**
+   * PUT /api/admin/coins/:coinId
+   * Update coin information
+   */
+  @Put('coins/:coinId')
+  async updateCoin(
+    @Param('coinId') coinId: string,
+    @Body() body: {
+      name?: string;
+      symbol?: string;
+      contractAddress?: string | null;
+      chain?: string;
+      totalSupply?: number | null;
+      circulatingSupply?: number | null;
+      priceUsd?: number | null;
+      liquidityUsd?: number | null;
+      isActive?: boolean;
+      isFamous?: boolean;
+    },
+    @GetUser() admin: { id: string },
+  ) {
+    const coin = await this.coinsService.findCoinById(coinId);
+    if (!coin) {
+      throw new NotFoundException('Coin not found');
+    }
+
+    const updated = await this.coinsService.updateCoin(coinId, {
+      ...body,
+      chain: body.chain as any,
+    });
+
+    // Log admin action
+    await this.prisma.adminLog.create({
+      data: {
+        adminId: admin.id,
+        action: 'UPDATE_COIN',
+        meta: {
+          coinId,
+          coinSymbol: coin.symbol,
+          coinName: coin.name,
+          changes: body,
+        },
+      },
+    });
+
+    return updated;
+  }
+
+  /**
    * GET /api/admin/coins
    * Get all coins with pagination and filtering
    */

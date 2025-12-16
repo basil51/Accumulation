@@ -40,6 +40,137 @@ export class CoinGeckoService {
   }
 
   /**
+   * Map chain to CoinGecko native coin id (for native token pricing)
+   */
+  private mapChainToNativeId(chain: Chain): string | null {
+    const mapping: Record<Chain, string> = {
+      [Chain.ETHEREUM]: 'ethereum',
+      [Chain.BSC]: 'binancecoin',
+      [Chain.POLYGON]: 'matic-network',
+      [Chain.ARBITRUM]: 'ethereum', // native is ETH
+      [Chain.BASE]: 'ethereum', // native is ETH
+      [Chain.AVALANCHE]: 'avalanche-2',
+      [Chain.FANTOM]: 'fantom',
+      [Chain.SOLANA]: 'solana',
+      [Chain.BITCOIN]: 'bitcoin',
+    };
+    return mapping[chain] || null;
+  }
+
+  /**
+   * Map our Chain enum to CoinGecko platform IDs (for price lookups)
+   */
+  private mapChainToPlatform(chain: Chain): string | null {
+    const mapping: Record<Chain, string> = {
+      [Chain.ETHEREUM]: 'ethereum',
+      [Chain.BSC]: 'binance-smart-chain',
+      [Chain.POLYGON]: 'polygon-pos',
+      [Chain.ARBITRUM]: 'arbitrum',
+      [Chain.BASE]: 'base',
+      [Chain.AVALANCHE]: 'avalanche',
+      [Chain.FANTOM]: 'fantom',
+      [Chain.SOLANA]: 'solana',
+      [Chain.BITCOIN]: '',
+    };
+
+    return mapping[chain] || null;
+  }
+
+  /**
+   * Lightweight price lookup for a single token contract
+   * Uses CoinGecko simple token price endpoint
+   */
+  async fetchTokenPriceUsd(chain: Chain, contractAddress: string): Promise<number | null> {
+    const platform = this.mapChainToPlatform(chain);
+    const address = contractAddress?.toLowerCase();
+
+    if (!platform || !address) {
+      return null;
+    }
+
+    const url = `${this.baseUrl}/simple/token_price/${platform}?contract_addresses=${address}&vs_currencies=usd`;
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+    };
+
+    if (this.apiKey) {
+      headers['x-cg-pro-api-key'] = this.apiKey;
+    }
+
+    try {
+      const response = await fetch(url, { headers });
+
+      if (!response.ok) {
+        const status = `${response.status} ${response.statusText}`;
+        if (response.status === 429) {
+          this.logger.warn(`CoinGecko rate limit when fetching price for ${address} on ${chain}: ${status}`);
+        } else {
+          this.logger.warn(`CoinGecko price fetch failed for ${address} on ${chain}: ${status}`);
+        }
+        return null;
+      }
+
+      const data = await response.json();
+      const price = data?.[address]?.usd;
+
+      if (price === undefined || price === null) {
+        this.logger.debug(`CoinGecko returned no price for ${address} on ${chain}`);
+        return null;
+      }
+
+      return Number(price);
+    } catch (error: any) {
+      this.logger.warn(
+        `Error fetching CoinGecko price for ${address} on ${chain}: ${error.message || error}`,
+      );
+      return null;
+    }
+  }
+
+  /**
+   * Lightweight price lookup for native token of a chain
+   */
+  async fetchNativePriceUsd(chain: Chain): Promise<number | null> {
+    const coinId = this.mapChainToNativeId(chain);
+    if (!coinId) {
+      return null;
+    }
+
+    const url = `${this.baseUrl}/simple/price?ids=${coinId}&vs_currencies=usd`;
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+    };
+    if (this.apiKey) {
+      headers['x-cg-pro-api-key'] = this.apiKey;
+    }
+
+    try {
+      const response = await fetch(url, { headers });
+      if (!response.ok) {
+        const status = `${response.status} ${response.statusText}`;
+        if (response.status === 429) {
+          this.logger.warn(`CoinGecko rate limit when fetching native price for ${chain}: ${status}`);
+        } else {
+          this.logger.warn(`CoinGecko native price fetch failed for ${chain}: ${status}`);
+        }
+        return null;
+      }
+      const data = await response.json();
+      const price = data?.[coinId]?.usd;
+      if (price === undefined || price === null) {
+        this.logger.debug(`CoinGecko returned no native price for ${chain}`);
+        return null;
+      }
+      return Number(price);
+    } catch (error: any) {
+      this.logger.warn(
+        `Error fetching CoinGecko native price for ${chain}: ${error.message || error}`,
+      );
+      return null;
+    }
+  }
+
+  /**
    * Fetch coins from CoinGecko API
    * Gets top coins by market cap
    */
@@ -50,7 +181,7 @@ export class CoinGeckoService {
     const allCoins: CoinGeckoCoin[] = [];
     const perPage = 250; // CoinGecko max per page
     const pages = Math.ceil(limit / perPage);
-
+ 
     for (let page = 1; page <= pages; page++) {
       try {
         const url = `${this.baseUrl}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${perPage}&page=${page}&sparkline=false`;

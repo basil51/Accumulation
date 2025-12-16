@@ -16,6 +16,7 @@ import { WhaleClusterRule } from './rules/whale-cluster.rule';
 import { LpAddRule } from './rules/lp-add.rule';
 import { DexSwapSpikeRule } from './rules/dex-swap-spike.rule';
 import { DetectionProcessor } from './detection.processor';
+import { SignalDebugInspector } from './services/signal-debug-inspector.service';
 import { SignalsController } from './signals.controller';
 
 @Module({
@@ -40,6 +41,7 @@ import { SignalsController } from './signals.controller';
     LpAddRule,
     DexSwapSpikeRule,
     DetectionProcessor,
+    SignalDebugInspector,
   ],
   exports: [RuleEngineService, ScoringService, SignalService],
 })

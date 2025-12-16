@@ -5,6 +5,7 @@ import * as argon2 from 'argon2';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 @Injectable()
 export class AuthService {
@@ -87,6 +88,32 @@ export class AuthService {
       accessToken,
       refreshToken,
     };
+  }
+
+  async refresh(refreshToken: string) {
+    try {
+      const payload = await this.jwtService.verifyAsync<JwtPayload>(refreshToken, {
+        secret: this.config.get('JWT_SECRET'),
+      });
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+      });
+
+      if (!user) {
+        throw new ForbiddenException('User no longer exists');
+      }
+
+      const tokens = await this.signToken(user.id, user.email);
+      const { password, ...userWithoutPassword } = user;
+
+      return {
+        ...tokens,
+        user: userWithoutPassword,
+      };
+    } catch (error) {
+      throw new ForbiddenException('Invalid refresh token');
+    }
   }
 
   async getCurrentUser(userId: string) {

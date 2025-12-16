@@ -16,7 +16,7 @@ export class NormalizationService {
     try {
       const isDuplicate = await this.deduplicationService.isDuplicate(data.eventId);
       if (isDuplicate) {
-        this.logger.log(`Skipping duplicate event: ${data.eventId}`);
+        this.logger.debug(`Skipping duplicate event: ${data.eventId}`);
         return null;
       }
 

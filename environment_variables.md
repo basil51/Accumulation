@@ -63,13 +63,13 @@ REDIS_URL="redis://localhost:6379"
 NODE_ENV="development"  # development | staging | production
 
 # Application port
-PORT=3000
+PORT=3007
 
 # API base URL
-API_BASE_URL="http://localhost:3000"
+API_BASE_URL="http://localhost:4007"
 
 # Frontend URL (for CORS and redirects)
-FRONTEND_URL="http://localhost:3001"
+FRONTEND_URL="http://localhost:3007"
 
 # Application secret (for JWT, sessions, etc.)
 APP_SECRET="your-super-secret-key-change-in-production"

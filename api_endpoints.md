@@ -2,7 +2,7 @@
 
 This document defines **all REST API endpoints** for the platform. The API follows RESTful conventions and returns JSON responses.
 
-**Base URL:** `https://api.yourapp.com/api` (production) or `http://localhost:3000/api` (development)
+**Base URL:** `https://api.yourapp.com/api` (production) or `http://localhost:3007/api` (development)
 
 ---
 

@@ -187,5 +187,24 @@ This is a private project. For questions or issues, contact the project maintain
 - 🟡 Documentation Improvements
 - 🟡 Performance Optimization
 
+### Prisma 
+   cd /home/basel/Projects/Accumulation/backend && npx prisma studio
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Prisma Studio is up on http://localhost:5555
+
 **Last Updated:** 2025-12-07
 
+Recommended next files:
+
+api_endpoints.md
+
+queue_flow.md
+
+providers_cost_analysis.md
+
+token_metadata.md
+
+frontend_structure.md
+
+alerts_flow.md
