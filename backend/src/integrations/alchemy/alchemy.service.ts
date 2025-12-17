@@ -173,12 +173,7 @@ export class AlchemyService {
           method: 'alchemy_getAssetTransfers',
           params: [requestParams],
         };
-        this.logger.debug('====requestBody===='+JSON.stringify(requestBody));
-        this.logger.debug('====requestParams===='+JSON.stringify(requestParams)); 
-        this.logger.debug(
-          `Fetching transfers for chain ${params.chain}, fromBlock: ${params.fromBlock}, toBlock: ${params.toBlock}`,
-        );
-
+        //this.logger.debug('====requestBody Debug ====>'+JSON.stringify(requestBody));
         const response = await this.httpClient.post<{
           jsonrpc: string;
           id: number;
@@ -194,6 +189,9 @@ export class AlchemyService {
 
         if (!response.data.result) {
           throw new Error('Alchemy API returned no result');
+        }
+        else{
+          this.logger.debug('====response Debug ====> Result'+JSON.stringify(response.data.result));
         }
 
         const transfers = response.data.result.transfers || [];

@@ -102,7 +102,7 @@ export class IngestionSchedulerService implements OnModuleInit {
     const startTime = Date.now();
 
     try {
-      this.logger.debug('Starting Alchemy ingestion cycle');
+      this.logger.debug('Alchemy Debug ====> Starting Alchemy ingestion cycle');
 
       // Process each supported chain
       for (const chain of this.supportedChains) {
@@ -122,7 +122,7 @@ export class IngestionSchedulerService implements OnModuleInit {
       }
 
       const duration = Date.now() - startTime;
-      this.logger.debug(`Alchemy ingestion cycle completed in ${duration}ms`);
+      this.logger.debug(`Alchemy Debug ====> ingestion cycle completed in ${duration}ms`);
     } catch (error: any) {
       this.logger.error('Error in Alchemy ingestion cycle:', error.message);
     } finally {
@@ -154,7 +154,7 @@ export class IngestionSchedulerService implements OnModuleInit {
     });
 
     if (coins.length === 0) {
-      this.logger.debug(`No active/famous/watchlist coins found for chain ${chain}`);
+      this.logger.debug(`Alchemy Debug ====> No active/famous/watchlist coins found for chain ${chain}`);
       return;
     }
 
@@ -316,7 +316,7 @@ export class IngestionSchedulerService implements OnModuleInit {
           // Log calculation details for very small amounts (potential dust)
           if (calculatedAmountUsd < 0.01) {
             this.logger.debug(
-              `[Dust] Enriching amountUsd: amount=${normalizedEvent.amount.toExponential()} * price=$${priceUsd} = $${calculatedAmountUsd.toExponential()} (will be skipped as dust)`,
+              `Alchemy Debug ====> [Dust] Enriching amountUsd: amount=${normalizedEvent.amount.toExponential()} * price=$${priceUsd} = $${calculatedAmountUsd.toExponential()} (will be skipped as dust)`,
             );
           }
           
@@ -325,7 +325,7 @@ export class IngestionSchedulerService implements OnModuleInit {
             if (calculatedAmountUsd >= 1) {
               // Only log non-dust transactions to reduce noise
               this.logger.debug(
-                `Enriched amountUsd: ${normalizedEvent.amount} * $${priceUsd} = $${calculatedAmountUsd.toFixed(2)}`,
+                `Alchemy Debug ====> Enriched amountUsd: ${normalizedEvent.amount} * $${priceUsd} = $${calculatedAmountUsd.toFixed(2)}`,
               );
             }
           } else {
@@ -335,7 +335,7 @@ export class IngestionSchedulerService implements OnModuleInit {
           }
         } else {
           this.logger.debug(
-            `⚠️ Missing price for coin ${coinId} (${contractAddress}) on ${chain}; amountUsd will be null (will attempt backfill in rule engine)`,
+            `Alchemy Debug ====> ⚠️ Missing price for coin ${coinId} (${contractAddress}) on ${chain}; amountUsd will be null (will attempt backfill in rule engine)`,
           );
         }
 
@@ -391,7 +391,7 @@ export class IngestionSchedulerService implements OnModuleInit {
     // If we have no price, we can't do USD-based thresholds reliably.
     if (!Number.isFinite(priceUsd) || (priceUsd as number) <= 0) {
       this.logger.debug(
-        `[AccumulationScan] Skipping ${coinId} on ${chain} (missing priceUsd)`,
+        `Alchemy Debug ====> [AccumulationScan] Skipping ${coinId} on ${chain} (missing priceUsd)`,
       );
       return;
     }
@@ -666,7 +666,7 @@ export class IngestionSchedulerService implements OnModuleInit {
     if (Number.isFinite(storedPrice) && (storedPrice as number) > 0) {
       this.setPriceCache(cacheKey, storedPrice as number);
       this.logger.debug(
-        `Using stored price for ${contractAddress} on ${chain}: $${storedPrice}`,
+        `Alchemy Debug ====> Using stored price for ${contractAddress} on ${chain}: $${storedPrice}`,
       );
       return storedPrice as number;
     }
@@ -675,14 +675,14 @@ export class IngestionSchedulerService implements OnModuleInit {
     const cached = this.getCachedPrice(cacheKey);
     if (cached !== null) {
       this.logger.debug(
-        `Using cached price for ${contractAddress} on ${chain}: $${cached}`,
+        `Alchemy Debug ====> Using cached price for ${contractAddress} on ${chain}: $${cached}`,
       );
       return cached;
     }
 
     // Log price resolution attempt
     this.logger.debug(
-      `Resolving price for coin ${coinId} (${contractAddress}) on ${chain} - stored: ${storedPrice}, native: ${isNative}`,
+      `Alchemy Debug ====> Resolving price for coin ${coinId} (${contractAddress}) on ${chain} - stored: ${storedPrice}, native: ${isNative}`,
     );
 
     try {

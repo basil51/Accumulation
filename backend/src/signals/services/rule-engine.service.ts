@@ -81,7 +81,7 @@ export class RuleEngineService {
         
         // Log the calculation details for debugging
         this.logger.debug(
-          `[Backfill] Event ${eventId}: amount=${event.amount} (${event.amount.toExponential()}) * price=$${tokenMetadata.priceUsd} = $${backfilledAmount.toExponential()}`,
+          `RuleEngine Debug ====> [Backfill] Event ${eventId}: amount=${event.amount} (${event.amount.toExponential()}) * price=$${tokenMetadata.priceUsd} = $${backfilledAmount.toExponential()}`,
         );
         
         if (Number.isFinite(backfilledAmount) && backfilledAmount > 0) {
@@ -231,7 +231,7 @@ export class RuleEngineService {
           await this.createAlertSignals(coin.id, event, score, triggeredRules, context);
         } else {
           this.logger.debug(
-            `Score ${score} meets alert threshold but lacks multi-evidence, creating candidate only`,
+            `RuleEngine Debug ====> Score ${score} meets alert threshold but lacks multi-evidence, creating candidate only`,
           );
           await this.createCandidateSignal(coin.id, event, score, triggeredRules, context);
         }
@@ -316,7 +316,7 @@ export class RuleEngineService {
 
     if (usdRules.includes(rule.name) && !amountUsdValid) {
       const reason = `Guardrail: USD amount unavailable (${event.amountUsd ?? 'null'}) - skipping USD-based rule`;
-      this.logger.debug(`[Guardrail] ${rule.name}: ${reason}`);
+      this.logger.debug(`RuleEngine Debug ====> [Guardrail] ${rule.name}: ${reason}`);
       return {
         triggered: false,
         score: 0,
@@ -332,7 +332,7 @@ export class RuleEngineService {
 
     if (liquidityRules.includes(rule.name) && !hasLiquidity) {
       const reason = `Guardrail: Liquidity missing (${tokenMetadata?.liquidityUsd ?? 'null'}) - skipping liquidity-dependent rule`;
-      this.logger.debug(`[Guardrail] ${rule.name}: ${reason}`);
+      this.logger.debug(`RuleEngine Debug ====> [Guardrail] ${rule.name}: ${reason}`);
       return {
         triggered: false,
         score: 0,
@@ -344,7 +344,7 @@ export class RuleEngineService {
 
     if (priceRules.includes(rule.name) && !hasPrice) {
       const reason = `Guardrail: Price missing (${tokenMetadata?.priceUsd ?? 'null'}) - skipping price-dependent rule`;
-      this.logger.debug(`[Guardrail] ${rule.name}: ${reason}`);
+      this.logger.debug(`RuleEngine Debug ====> [Guardrail] ${rule.name}: ${reason}`);
       return {
         triggered: false,
         score: 0,
@@ -356,7 +356,7 @@ export class RuleEngineService {
 
     if (baselineVolumeRules.includes(rule.name) && !hasBaselineVolume) {
       const reason = `Guardrail: Baseline volume missing (${baseline?.avgVolumeUsd ?? 'null'}) - skipping volume comparison`;
-      this.logger.debug(`[Guardrail] ${rule.name}: ${reason}`);
+      this.logger.debug(`RuleEngine Debug ====> [Guardrail] ${rule.name}: ${reason}`);
       return {
         triggered: false,
         score: 0,
@@ -368,7 +368,7 @@ export class RuleEngineService {
 
     if (baselineSwapRules.includes(rule.name) && !hasBaselineSwap) {
       const reason = `Guardrail: Baseline swap volume missing (${baseline?.avgSwapUsd ?? 'null'}) - skipping swap spike rule`;
-      this.logger.debug(`[Guardrail] ${rule.name}: ${reason}`);
+      this.logger.debug(`RuleEngine Debug ====> [Guardrail] ${rule.name}: ${reason}`);
       return {
         triggered: false,
         score: 0,

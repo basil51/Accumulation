@@ -42,7 +42,7 @@ export class SignalService {
       // TEMPORARY: Lowered to $0.10 for testing - change back to $1 after verifying signals work
       const minUsd = 0.10; // drop dust/zero signals (was 1, lowered for testing)
       if (!Number.isFinite(input.amountUsd) || input.amountUsd < minUsd) {
-        this.logger.debug(`Skipping AccumulationSignal creation: amountUsd=$${input.amountUsd} < minUsd=$${minUsd}`);
+        this.logger.debug(`SignalService Debug ====> Skipping AccumulationSignal creation: amountUsd=$${input.amountUsd} < minUsd=$${minUsd}`);
         return null;
       }
 
@@ -215,6 +215,7 @@ export class SignalService {
               symbol: true,
               contractAddress: true,
               chain: true,
+              priceUsd: true,
             },
           },
         },
@@ -315,6 +316,7 @@ export class SignalService {
               symbol: true,
               contractAddress: true,
               chain: true,
+              priceUsd: true,
             },
           },
         },
@@ -399,6 +401,7 @@ export class SignalService {
               id: true,
               name: true,
               symbol: true,
+              priceUsd: true,
             },
           },
         },
@@ -413,6 +416,7 @@ export class SignalService {
               id: true,
               name: true,
               symbol: true,
+              priceUsd: true,
             },
           },
         },

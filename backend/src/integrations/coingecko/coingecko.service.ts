@@ -114,7 +114,7 @@ export class CoinGeckoService {
       const price = data?.[address]?.usd;
 
       if (price === undefined || price === null) {
-        this.logger.debug(`CoinGecko returned no price for ${address} on ${chain}`);
+        this.logger.debug(`CoinGecko Debug ====> returned no price for ${address} on ${chain}`);
         return null;
       }
 
@@ -158,7 +158,7 @@ export class CoinGeckoService {
       const data = await response.json();
       const price = data?.[coinId]?.usd;
       if (price === undefined || price === null) {
-        this.logger.debug(`CoinGecko returned no native price for ${chain}`);
+        this.logger.debug(`CoinGecko Debug ====> returned no native price for ${chain}`);
         return null;
       }
       return Number(price);
@@ -421,7 +421,7 @@ export class CoinGeckoService {
           // Don't count 400/404 as errors (bad request or coin doesn't exist/delisted)
           // These are common for native coins or invalid coin IDs
           if (detailResponse.status === 400 || detailResponse.status === 404) {
-            this.logger.debug(`Skipping ${coin.symbol} (${coin.id}): ${detailResponse.status} ${detailResponse.statusText}`);
+            this.logger.debug(`CoinGecko Debug ====> Skipping ${coin.symbol} (${coin.id}): ${detailResponse.status} ${detailResponse.statusText}`);
             // Still save progress
             await this.saveLastProcessedIndex(globalIndex + 1);
             continue;
@@ -456,7 +456,7 @@ export class CoinGeckoService {
 
         // If coin has no supported chains, skip it (not an error)
         if (!hasSupportedChain) {
-          this.logger.debug(`Coin ${coin.symbol} (${coin.id}) has no supported chains, skipping`);
+          this.logger.debug(`CoinGecko Debug ====> ${coin.symbol} (${coin.id}) has no supported chains, skipping`);
           // Save progress even when skipping
           await this.saveLastProcessedIndex(globalIndex + 1);
           // Still wait to avoid rate limiting

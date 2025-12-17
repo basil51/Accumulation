@@ -41,7 +41,7 @@ class SignalDebugSession {
 
   setSkipReason(reason: string) {
     this.skipReason = reason;
-    this.logger.debug(`[SignalDebug] Event ${this.eventId} skipped: ${reason}`);
+    this.logger.debug(`SignalDebugInspector Debug ====> Event ${this.eventId} skipped: ${reason}`);
     // Also add as note for summary
     this.notes.push(`⏭️ SKIPPED: ${reason}`);
   }
@@ -60,13 +60,13 @@ class SignalDebugSession {
     // Enhanced logging with more context
     const status = triggered ? '✅ TRIGGERED' : '❌ NOT TRIGGERED';
     this.logger.debug(
-      `[SignalDebug] Event ${this.eventId} | Rule ${result.ruleName} -> ${status} score=${normalizedScore} | reason="${result.reason}"`,
+      `SignalDebugInspector Debug ====> Event ${this.eventId} | Rule ${result.ruleName} -> ${status} score=${normalizedScore} | reason="${result.reason}"`,
     );
     
     // Log evidence if available
     if (result.evidence && Object.keys(result.evidence).length > 0) {
       this.logger.debug(
-        `[SignalDebug] Event ${this.eventId} | Rule ${result.ruleName} evidence: ${JSON.stringify(result.evidence)}`,
+        `SignalDebugInspector Debug ====> Event ${this.eventId} | Rule ${result.ruleName} evidence: ${JSON.stringify(result.evidence)}`,
       );
     }
   }
@@ -79,7 +79,7 @@ class SignalDebugSession {
     const status = score > 0 ? '✅ SIGNAL CREATED' : '❌ NO SIGNAL';
     
     this.logger.debug(
-      `[SignalDebug] Event ${this.eventId} | ${status} | Final score=${score} | Triggered rules=${ruleCount} [${this.triggeredRules.join(',')}]`,
+      `SignalDebugInspector Debug ====> Event ${this.eventId} | ${status} | Final score=${score} | Triggered rules=${ruleCount} [${this.triggeredRules.join(',')}]`,
     );
     
     if (score === 0 && ruleCount === 0) {

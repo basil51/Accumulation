@@ -34,7 +34,7 @@ export class ScoringService {
     // Only log debug if score is significant (reduces terminal noise)
     if (normalizedScore > 0 || triggeredRules.length > 0) {
       this.logger.debug(
-        `Score calculation: raw=${rawScore}, normalized=${normalizedScore}, rules=${triggeredRules.length}`,
+        `Scoring Debug ====> Score calculation: raw=${rawScore}, normalized=${normalizedScore}, rules=${triggeredRules.length}`,
       );
     }
 

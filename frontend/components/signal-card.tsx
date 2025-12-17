@@ -22,6 +22,15 @@ export function SignalCard({ signal, type }: SignalCardProps) {
     return `$${value.toFixed(2)}`;
   };
 
+  const formatPrice = (value: number | undefined | null) => {
+    if (value === undefined || value === null || isNaN(value)) {
+      return 'N/A';
+    }
+    if (value < 0.01) return `$${value.toFixed(6)}`;
+    if (value < 1) return `$${value.toFixed(4)}`;
+    return `$${value.toFixed(2)}`;
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -52,6 +61,11 @@ export function SignalCard({ signal, type }: SignalCardProps) {
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
               {accSignal.coin.chain || 'Unknown Chain'}
             </p>
+            {accSignal.coin.priceUsd != null && (
+              <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mt-1">
+                Price: {formatPrice(accSignal.coin.priceUsd)}
+              </p>
+            )}
           </div>
           <span
             className={`px-2 py-1 rounded text-xs font-semibold ${getScoreColor(
@@ -118,6 +132,11 @@ export function SignalCard({ signal, type }: SignalCardProps) {
           <p className="text-sm text-zinc-500 dark:text-zinc-400 capitalize">
             {(marketSignal.signalType?.replace('_', ' ') ?? 'market signal')}
           </p>
+          {marketSignal.coin.priceUsd != null && (
+            <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mt-1">
+              Price: {formatPrice(marketSignal.coin.priceUsd)}
+            </p>
+          )}
         </div>
         <span
           className={`px-2 py-1 rounded text-xs font-semibold ${getScoreColor(
